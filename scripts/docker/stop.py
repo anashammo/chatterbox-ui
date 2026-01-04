@@ -9,19 +9,30 @@ def main():
     parser = argparse.ArgumentParser(description="Stop Docker Compose services")
     parser.add_argument("--remove-volumes", "-v", action="store_true",
                        help="Remove volumes as well (WARNING: deletes data)")
+    parser.add_argument("--ngrok", action="store_true",
+                       help="Also stop ngrok tunnels")
 
     args = parser.parse_args()
 
-    cmd = ["docker-compose", "down"]
+    # Base command
+    cmd = ["docker", "compose"]
+
+    # Add ngrok profile if requested
+    if args.ngrok:
+        cmd.extend(["--profile", "ngrok"])
+        print("Including ngrok tunnels in stop command...")
+
+    cmd.append("down")
 
     if args.remove_volumes:
-        print("⚠️  WARNING: This will remove all volumes and delete data!")
+        print("WARNING: This will remove all volumes and delete data!")
         confirm = input("Are you sure? (yes/no): ")
         if confirm.lower() != "yes":
             print("Cancelled.")
             sys.exit(0)
         cmd.append("-v")
 
+    print(f"Running: {' '.join(cmd)}")
     result = subprocess.run(cmd)
     sys.exit(result.returncode)
 

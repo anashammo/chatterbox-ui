@@ -1,1 +1,1 @@
-"""Docker management scripts for Whisper transcription system"""
+"""Docker management scripts for Chatterbox TTS system"""

@@ -15,11 +15,17 @@ def main():
                        help="Remove images and volumes (WARNING: deletes everything)")
     parser.add_argument("--images", action="store_true", help="Remove images only")
     parser.add_argument("--volumes", action="store_true", help="Remove volumes only")
+    parser.add_argument("--ngrok", action="store_true", help="Include ngrok services in cleanup")
 
     args = parser.parse_args()
 
+    # Base command
+    base_cmd = ["docker", "compose"]
+    if args.ngrok:
+        base_cmd.extend(["--profile", "ngrok"])
+
     if args.all:
-        print("⚠️  WARNING: This will remove all containers, images, and volumes!")
+        print("WARNING: This will remove all containers, images, and volumes!")
         print("All data will be deleted!")
         confirm = input("Are you sure? (yes/no): ")
         if confirm.lower() != "yes":
@@ -27,34 +33,34 @@ def main():
             sys.exit(0)
 
         # Stop and remove containers and volumes
-        subprocess.run(["docker-compose", "down", "-v"])
+        subprocess.run(base_cmd + ["down", "-v"])
 
         # Remove images
         subprocess.run(["docker", "rmi", "chatterbox-backend", "chatterbox-frontend"],
                       stderr=subprocess.DEVNULL)
 
-        print("✅ Cleanup complete!")
+        print("[OK] Cleanup complete!")
 
     elif args.images:
         print("Removing Docker images...")
         subprocess.run(["docker", "rmi", "chatterbox-backend", "chatterbox-frontend"],
                       stderr=subprocess.DEVNULL)
-        print("✅ Images removed!")
+        print("[OK] Images removed!")
 
     elif args.volumes:
-        print("⚠️  WARNING: This will remove all volumes and delete data!")
+        print("WARNING: This will remove all volumes and delete data!")
         confirm = input("Are you sure? (yes/no): ")
         if confirm.lower() != "yes":
             print("Cancelled.")
             sys.exit(0)
 
-        subprocess.run(["docker-compose", "down", "-v"])
-        print("✅ Volumes removed!")
+        subprocess.run(base_cmd + ["down", "-v"])
+        print("[OK] Volumes removed!")
 
     else:
         # Just stop and remove containers (default)
-        subprocess.run(["docker-compose", "down"])
-        print("✅ Containers stopped and removed!")
+        subprocess.run(base_cmd + ["down"])
+        print("[OK] Containers stopped and removed!")
 
 
 if __name__ == "__main__":

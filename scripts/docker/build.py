@@ -20,10 +20,10 @@ def run_command(cmd, description):
     result = subprocess.run(cmd)
 
     if result.returncode != 0:
-        print(f"\n❌ Error: {description} failed")
+        print(f"\n[X] Error: {description} failed")
         sys.exit(1)
 
-    print(f"\n✅ Success: {description} completed")
+    print(f"\n[OK] Success: {description} completed")
 
 
 def main():
@@ -34,29 +34,30 @@ def main():
 
     args = parser.parse_args()
 
-    # If no specific service selected, build both
+    # If no specific service selected, build all
     build_all = not (args.backend or args.frontend)
 
-    # Build backend
-    if args.backend or build_all:
-        cmd = ["docker", "build", "-t", "chatterbox-backend"]
-        if args.no_cache:
-            cmd.append("--no-cache")
-        cmd.extend(["-f", "src/presentation/api/Dockerfile", "."])
+    # Base command using docker compose
+    base_cmd = ["docker", "compose", "build"]
 
-        run_command(cmd, "Building backend image")
+    if args.no_cache:
+        base_cmd.append("--no-cache")
 
-    # Build frontend
-    if args.frontend or build_all:
-        cmd = ["docker", "build", "-t", "chatterbox-frontend"]
-        if args.no_cache:
-            cmd.append("--no-cache")
-        cmd.extend(["-f", "src/presentation/frontend/Dockerfile", "src/presentation/frontend"])
+    # Build specific services or all
+    if build_all:
+        run_command(base_cmd, "Building all images")
+    else:
+        services = []
+        if args.backend:
+            services.append("backend")
+        if args.frontend:
+            services.append("frontend")
 
-        run_command(cmd, "Building frontend image")
+        cmd = base_cmd + services
+        run_command(cmd, f"Building {', '.join(services)} image(s)")
 
     print("\n" + "="*60)
-    print("✅ All requested images built successfully!")
+    print("[OK] All requested images built successfully!")
     print("="*60)
 
 

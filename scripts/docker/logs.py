@@ -7,13 +7,22 @@ import argparse
 
 def main():
     parser = argparse.ArgumentParser(description="View Docker container logs")
-    parser.add_argument("service", nargs="?", help="Service name (backend, frontend, postgres)")
+    parser.add_argument("service", nargs="?",
+                       help="Service name (backend, frontend, postgres, ngrok-backend, ngrok-frontend)")
     parser.add_argument("--follow", "-f", action="store_true", help="Follow log output")
     parser.add_argument("--tail", type=int, help="Number of lines to show from end")
+    parser.add_argument("--ngrok", action="store_true", help="Include ngrok services")
 
     args = parser.parse_args()
 
-    cmd = ["docker-compose", "logs"]
+    # Base command
+    cmd = ["docker", "compose"]
+
+    # Add ngrok profile if requested
+    if args.ngrok:
+        cmd.extend(["--profile", "ngrok"])
+
+    cmd.append("logs")
 
     if args.follow:
         cmd.append("-f")

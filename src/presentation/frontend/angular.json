@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "whisper-frontend": {
+    "chatterbox-frontend": {
       "projectType": "application",
       "root": "",
       "sourceRoot": "src",
@@ -12,7 +12,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "dist/whisper-frontend",
+            "outputPath": "dist/chatterbox-frontend",
             "index": "src/index.html",
             "main": "src/main.ts",
             "polyfills": ["zone.js"],
@@ -61,10 +61,10 @@
           },
           "configurations": {
             "production": {
-              "buildTarget": "whisper-frontend:build:production"
+              "buildTarget": "chatterbox-frontend:build:production"
             },
             "development": {
-              "buildTarget": "whisper-frontend:build:development"
+              "buildTarget": "chatterbox-frontend:build:development"
             }
           },
           "defaultConfiguration": "development"

@@ -7,7 +7,8 @@ import argparse
 
 def main():
     parser = argparse.ArgumentParser(description="Open shell in running container")
-    parser.add_argument("service", choices=["backend", "frontend", "postgres"],
+    parser.add_argument("service",
+                       choices=["backend", "frontend", "postgres", "ngrok-backend", "ngrok-frontend"],
                        help="Service to open shell in")
 
     args = parser.parse_args()
@@ -16,7 +17,9 @@ def main():
     container_map = {
         "backend": ("chatterbox-backend", "bash"),
         "frontend": ("chatterbox-frontend", "sh"),
-        "postgres": ("chatterbox-postgres", "sh")
+        "postgres": ("chatterbox-postgres", "sh"),
+        "ngrok-backend": ("ngrok-chatterbox-backend", "sh"),
+        "ngrok-frontend": ("ngrok-chatterbox-frontend", "sh"),
     }
 
     container_name, shell = container_map[args.service]

@@ -129,6 +129,42 @@ services:
     networks:
       - chatterbox-network
 
+  # Ngrok tunnel for backend (exposes backend to internet)
+  ngrok-backend:
+    image: ngrok/ngrok:latest
+    container_name: ngrok-chatterbox-backend
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    command: http backend:8002 --url=anas-hammo-chatterbox-backend.ngrok.dev
+    ports:
+      - "4040:4040"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - chatterbox-network
+    profiles:
+      - ngrok
+
+  # Ngrok tunnel for frontend (exposes frontend to internet)
+  ngrok-frontend:
+    image: ngrok/ngrok:latest
+    container_name: ngrok-chatterbox-frontend
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    command: http frontend:4201 --url=anas-hammo-chatterbox-frontend.ngrok.dev
+    ports:
+      - "4041:4040"
+    depends_on:
+      frontend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - chatterbox-network
+    profiles:
+      - ngrok
+
 volumes:
   chatterbox-postgres-data:
     driver: local
