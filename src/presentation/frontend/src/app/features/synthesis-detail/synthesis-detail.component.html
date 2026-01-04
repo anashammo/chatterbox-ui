@@ -1,0 +1,121 @@
+<div class="detail-container">
+  <!-- Back Button -->
+  <button class="back-btn" (click)="goBack()">
+    ← Back to History
+  </button>
+
+  <!-- Loading -->
+  <div class="loading" *ngIf="isLoading">
+    <div class="spinner-large"></div>
+    <p>Loading synthesis...</p>
+  </div>
+
+  <!-- Error -->
+  <div class="error-state" *ngIf="error && !isLoading">
+    <h2>Error</h2>
+    <p>{{ error }}</p>
+    <button class="btn btn-primary" (click)="goBack()">Go Back</button>
+  </div>
+
+  <!-- Synthesis Details -->
+  <div class="synthesis-details" *ngIf="synthesis && !isLoading">
+    <div class="header">
+      <h1>Synthesis Details</h1>
+      <span class="status-badge" [ngClass]="getStatusClass(synthesis.status)">
+        {{ synthesis.status }}
+      </span>
+    </div>
+
+    <!-- Meta Info -->
+    <div class="meta-section">
+      <div class="meta-item">
+        <span class="label">Model</span>
+        <span class="value">{{ synthesis.model }}</span>
+      </div>
+      <div class="meta-item" *ngIf="synthesis.language">
+        <span class="label">Language</span>
+        <span class="value">{{ synthesis.language | uppercase }}</span>
+      </div>
+      <div class="meta-item">
+        <span class="label">Created</span>
+        <span class="value">{{ formatDate(synthesis.created_at) }}</span>
+      </div>
+      <div class="meta-item" *ngIf="synthesis.completed_at">
+        <span class="label">Completed</span>
+        <span class="value">{{ formatDate(synthesis.completed_at) }}</span>
+      </div>
+      <div class="meta-item" *ngIf="synthesis.output_duration_seconds">
+        <span class="label">Audio Duration</span>
+        <span class="value">{{ synthesis.output_duration_seconds | number:'1.1-1' }}s</span>
+      </div>
+      <div class="meta-item" *ngIf="synthesis.processing_time_seconds">
+        <span class="label">Processing Time</span>
+        <span class="value">{{ synthesis.processing_time_seconds | number:'1.2-2' }}s</span>
+      </div>
+    </div>
+
+    <!-- Parameters -->
+    <div class="params-section">
+      <h2>Parameters</h2>
+      <div class="params-grid">
+        <div class="param">
+          <span class="label">CFG Weight</span>
+          <span class="value">{{ synthesis.cfg_weight }}</span>
+        </div>
+        <div class="param">
+          <span class="label">Exaggeration</span>
+          <span class="value">{{ synthesis.exaggeration }}</span>
+        </div>
+        <div class="param">
+          <span class="label">Text Length</span>
+          <span class="value">{{ synthesis.text_length }} characters</span>
+        </div>
+        <div class="param" *ngIf="synthesis.voice_reference_id">
+          <span class="label">Voice Reference</span>
+          <span class="value">{{ synthesis.voice_reference_id }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Text Content -->
+    <div class="text-section">
+      <div class="section-header">
+        <h2>Input Text</h2>
+        <button class="btn-icon" (click)="copyText()" title="Copy text">
+          📋
+        </button>
+      </div>
+      <div class="text-content">
+        {{ synthesis.input_text }}
+      </div>
+    </div>
+
+    <!-- Error Message -->
+    <div class="error-section" *ngIf="synthesis.status === 'failed' && synthesis.error_message">
+      <h2>Error Details</h2>
+      <div class="error-content">
+        {{ synthesis.error_message }}
+      </div>
+    </div>
+
+    <!-- Audio Player (for completed) -->
+    <div class="audio-section" *ngIf="synthesis.status === 'completed'">
+      <h2>Audio Output</h2>
+      <div class="audio-controls">
+        <button class="btn btn-primary" (click)="playAudio()">
+          {{ isPlaying ? '⏹️ Stop' : '▶️ Play' }}
+        </button>
+        <button class="btn btn-secondary" (click)="downloadAudio()">
+          ⬇️ Download
+        </button>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions-section">
+      <button class="btn btn-danger" (click)="deleteSynthesis()">
+        🗑️ Delete Synthesis
+      </button>
+    </div>
+  </div>
+</div>

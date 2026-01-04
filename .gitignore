@@ -1,0 +1,53 @@
+# Windows special files
+nul
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+.venv/
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment
+.env
+*.local
+
+# Database
+*.db
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# Node
+node_modules/
+
+# Angular
+.angular/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Audio outputs (handled by Docker volumes)
+audio_outputs/
+
+# Voice references (handled by Docker volumes)
+voice_references/
+
+# Claude Code
+.claude/

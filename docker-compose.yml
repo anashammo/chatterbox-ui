@@ -1,0 +1,145 @@
+services:
+  # PostgreSQL Database Service
+  postgres:
+    image: postgres:15-alpine
+    container_name: chatterbox-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-chatterbox}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chatterbox_secure_password}
+      POSTGRES_DB: ${POSTGRES_DB:-chatterbox_tts}
+    volumes:
+      - chatterbox-postgres-data:/var/lib/postgresql/data
+    ports:
+      # Expose on 5433 externally to avoid conflict with other projects
+      - "${POSTGRES_PORT:-5433}:5432"
+    networks:
+      - chatterbox-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-chatterbox} -d ${POSTGRES_DB:-chatterbox_tts}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Backend API Service
+  backend:
+    build:
+      context: .
+      dockerfile: src/presentation/api/Dockerfile
+    container_name: chatterbox-backend
+    # Load environment variables from backend .env file
+    env_file:
+      - ./src/presentation/api/.env
+    ports:
+      - "${BACKEND_PORT:-8002}:8002"
+    volumes:
+      # Hot-reload: Mount source code
+      - ./src:/app/src:ro
+      - ./scripts:/app/scripts:ro
+      # Synthesized audio outputs
+      - chatterbox-audio-outputs:/app/audio_outputs
+      # Voice reference files
+      - chatterbox-voice-references:/app/voice_references
+      # Chatterbox model cache (HuggingFace Hub)
+      - chatterbox-model-cache:/root/.cache/huggingface
+    environment:
+      # Database configuration (PostgreSQL)
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-chatterbox}:${POSTGRES_PASSWORD:-chatterbox_secure_password}@postgres:5432/${POSTGRES_DB:-chatterbox_tts}
+
+      # GPU configuration
+      - CUDA_VISIBLE_DEVICES=0
+      - TTS_DEVICE=cuda
+
+      # Fix for transformers SDPA attention compatibility with Chatterbox
+      # See: https://github.com/resemble-ai/chatterbox/issues/339
+      - TRANSFORMERS_ATTN_IMPLEMENTATION=eager
+
+      # Note: HF_TOKEN is loaded from env_file (./src/presentation/api/.env)
+      # Get your token from: https://huggingface.co/settings/tokens
+
+      # TTS model configuration
+      - TTS_DEFAULT_MODEL=${TTS_DEFAULT_MODEL:-turbo}
+      - TTS_DEFAULT_CFG_WEIGHT=${TTS_DEFAULT_CFG_WEIGHT:-0.5}
+      - TTS_DEFAULT_EXAGGERATION=${TTS_DEFAULT_EXAGGERATION:-0.5}
+
+      # Model pre-download configuration
+      # Set PRELOAD_MODEL_LIST to comma-separated list: turbo,standard,multilingual
+      - PRELOAD_MODELS=${PRELOAD_MODELS:-true}
+      - PRELOAD_MODEL_LIST=${PRELOAD_MODEL_LIST:-turbo,standard,multilingual}
+
+      # Hot-reload for development (set to false for production)
+      - HOT_RELOAD=${HOT_RELOAD:-true}
+
+      # Application settings
+      - PYTHONUNBUFFERED=1
+      - API_HOST=0.0.0.0
+      - API_PORT=8002
+      - AUDIO_OUTPUT_DIR=/app/audio_outputs
+      - VOICE_REFERENCE_DIR=/app/voice_references
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # No command override - uses entrypoint script which handles:
+    # - GPU detection
+    # - Model pre-download (if PRELOAD_MODELS=true)
+    # - Hot-reload (if HOT_RELOAD=true)
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - chatterbox-network
+
+  # Frontend Web Service
+  frontend:
+    build:
+      context: ./src/presentation/frontend
+      dockerfile: Dockerfile
+    container_name: chatterbox-frontend
+    ports:
+      - "${FRONTEND_PORT:-4201}:4201"
+    volumes:
+      # Hot-reload: Mount source code
+      - ./src/presentation/frontend/src:/app/src:ro
+      - ./src/presentation/frontend/angular.json:/app/angular.json:ro
+      - ./src/presentation/frontend/tsconfig.json:/app/tsconfig.json:ro
+      - ./src/presentation/frontend/tsconfig.app.json:/app/tsconfig.app.json:ro
+    environment:
+      - API_URL=http://localhost:8002/api/v1
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://0.0.0.0:4201/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - chatterbox-network
+
+volumes:
+  chatterbox-postgres-data:
+    driver: local
+  chatterbox-audio-outputs:
+    driver: local
+  chatterbox-voice-references:
+    driver: local
+  # Chatterbox model cache (HuggingFace Hub)
+  chatterbox-model-cache:
+    driver: local
+
+networks:
+  chatterbox-network:
+    driver: bridge

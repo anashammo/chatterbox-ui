@@ -1,0 +1,128 @@
+<div class="synthesize-container">
+  <div class="header">
+    <h1>Chatterbox TTS</h1>
+    <p class="subtitle">Text-to-Speech Synthesis</p>
+  </div>
+
+  <div class="form-card">
+    <!-- Error Message -->
+    <div class="error-message" *ngIf="error">
+      {{ error }}
+      <button class="close-btn" (click)="error = null">&times;</button>
+    </div>
+
+    <!-- Text Input -->
+    <div class="form-group">
+      <label for="text">Text to Synthesize</label>
+      <textarea
+        id="text"
+        [(ngModel)]="text"
+        placeholder="Enter text to convert to speech... Supports paralinguistic tags like [laugh], [cough], [sigh]"
+        rows="6"
+        [class.invalid]="textLength > maxTextLength"
+        [disabled]="isLoading"
+      ></textarea>
+      <div class="char-counter" [class.over]="textLength > maxTextLength">
+        {{ textLength }} / {{ maxTextLength }}
+      </div>
+    </div>
+
+    <!-- Model Selection -->
+    <div class="form-group">
+      <label for="model">TTS Model</label>
+      <select id="model" [(ngModel)]="selectedModel" [disabled]="isLoading">
+        <option *ngFor="let model of models" [value]="model.name">
+          {{ model.display_name }} ({{ model.parameters }})
+        </option>
+      </select>
+      <p class="help-text" *ngIf="models.length > 0">
+        {{ selectedModelDescription }}
+      </p>
+    </div>
+
+    <!-- Language (for multilingual) -->
+    <div class="form-group" *ngIf="isMultilingual">
+      <label for="language">Language <span class="required">*</span></label>
+      <select id="language" [(ngModel)]="selectedLanguage" [disabled]="isLoading">
+        <option value="">Select language...</option>
+        <option *ngFor="let lang of supportedLanguages" [value]="lang">
+          {{ lang | uppercase }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Voice Reference (optional) -->
+    <div class="form-group">
+      <label for="voiceRef">Voice Reference (optional)</label>
+      <select id="voiceRef" [(ngModel)]="selectedVoiceReferenceId" [disabled]="isLoading">
+        <option value="">Default voice</option>
+        <option *ngFor="let ref of voiceReferences" [value]="ref.id">
+          {{ ref.name }} ({{ ref.duration_seconds | number:'1.1-1' }}s)
+        </option>
+      </select>
+      <p class="help-text">Select a voice reference for voice cloning</p>
+    </div>
+
+    <!-- Advanced Options Toggle -->
+    <button class="toggle-advanced" (click)="toggleAdvanced()" type="button">
+      {{ showAdvanced ? 'Hide' : 'Show' }} Advanced Options
+      <span class="arrow">{{ showAdvanced ? '▲' : '▼' }}</span>
+    </button>
+
+    <!-- Advanced Options -->
+    <div class="advanced-options" *ngIf="showAdvanced">
+      <div class="form-group">
+        <label for="cfgWeight">CFG Weight: {{ cfgWeight | number:'1.2-2' }}</label>
+        <input
+          type="range"
+          id="cfgWeight"
+          [(ngModel)]="cfgWeight"
+          min="0"
+          max="1"
+          step="0.05"
+          [disabled]="isLoading"
+        />
+        <p class="help-text">Controls accent/style transfer (0 = less, 1 = more)</p>
+      </div>
+
+      <div class="form-group">
+        <label for="exaggeration">Exaggeration: {{ exaggeration | number:'1.2-2' }}</label>
+        <input
+          type="range"
+          id="exaggeration"
+          [(ngModel)]="exaggeration"
+          min="0"
+          max="2"
+          step="0.05"
+          [disabled]="isLoading"
+        />
+        <p class="help-text">Speech expressiveness (0 = neutral, 1+ = expressive)</p>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="actions">
+      <button
+        class="btn btn-primary"
+        (click)="synthesize()"
+        [disabled]="!isValid || isLoading"
+      >
+        <span *ngIf="isLoading" class="spinner"></span>
+        {{ isLoading ? 'Synthesizing...' : 'Synthesize' }}
+      </button>
+      <button
+        class="btn btn-secondary"
+        (click)="clearText()"
+        [disabled]="isLoading"
+      >
+        Clear
+      </button>
+    </div>
+  </div>
+
+  <!-- Navigation Links -->
+  <div class="nav-links">
+    <a routerLink="/history">View History</a>
+    <a routerLink="/voices">Manage Voices</a>
+  </div>
+</div>

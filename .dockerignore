@@ -1,0 +1,83 @@
+# Python
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Database (should be in volume)
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploads (should be in volume)
+uploads/
+
+# Frontend
+src/presentation/frontend/node_modules/
+src/presentation/frontend/dist/
+src/presentation/frontend/.angular/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+!requirements.md
+plans/
+docs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose*.yml
+.dockerignore
+
+# Scripts (except docker scripts)
+scripts/setup/
+scripts/maintenance/
+scripts/migrations/
+scripts/server/
+scripts/git/
+scripts/testing/
+
+# Tests
+tests/
+*.test.py
+
+# Logs
+*.log
+logs/
+
+# FFmpeg (if included in project)
+ffmpeg*/
+
+# Model cache (should be in volume)
+.cache/

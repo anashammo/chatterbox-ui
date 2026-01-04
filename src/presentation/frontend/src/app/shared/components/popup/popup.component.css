@@ -1,0 +1,143 @@
+/* Backdrop overlay */
+.popup-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
+}
+
+/* Modal container */
+.popup-modal {
+  background-color: #2d3748;
+  border: 1px solid #4a5568;
+  border-radius: 12px;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+/* Header */
+.popup-header {
+  padding: 1.5rem 1.5rem 1rem;
+  border-bottom: 1px solid #4a5568;
+}
+
+.popup-title {
+  margin: 0;
+  color: #f7fafc;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+/* Body */
+.popup-body {
+  padding: 1.5rem;
+}
+
+.popup-message {
+  color: #e2e8f0;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Footer */
+.popup-footer {
+  padding: 1rem 1.5rem 1.5rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  border-top: 1px solid #4a5568;
+}
+
+/* Buttons matching the dark theme */
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background-color: #4299e1;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #3182ce;
+}
+
+.btn-secondary {
+  background-color: #4a5568;
+  color: #e2e8f0;
+}
+
+.btn-secondary:hover {
+  background-color: #718096;
+}
+
+.btn-danger {
+  background-color: #fc8181;
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #f56565;
+}
+
+.btn-success {
+  background-color: #48bb78;
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #38a169;
+}
+
+/* Variant styling */
+.popup-error .popup-header {
+  border-bottom-color: #fc8181;
+}
+
+.popup-error .popup-title {
+  color: #fc8181;
+}
+
+.popup-success .popup-header {
+  border-bottom-color: #48bb78;
+}
+
+.popup-success .popup-title {
+  color: #48bb78;
+}
+
+/* Focus styles for accessibility */
+.btn:focus {
+  outline: 2px solid #4299e1;
+  outline-offset: 2px;
+}
+
+/* Responsive design */
+@media (max-width: 600px) {
+  .popup-modal {
+    max-width: 95%;
+  }
+
+  .popup-footer {
+    flex-direction: column-reverse;
+  }
+
+  .btn {
+    width: 100%;
+  }
+}

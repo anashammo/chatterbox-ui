@@ -1,0 +1,48 @@
+<div class="popup-backdrop"
+     [@backdropAnimation]
+     *ngIf="isVisible"
+     (click)="onBackdropClick()"
+     role="dialog"
+     aria-modal="true"
+     [attr.aria-labelledby]="'popup-title'">
+
+  <div class="popup-modal"
+       [@modalAnimation]
+       (click)="onModalClick($event)"
+       [ngClass]="getVariantClass()">
+
+    <!-- Header -->
+    <div class="popup-header">
+      <h3 id="popup-title" class="popup-title">{{ config.title }}</h3>
+    </div>
+
+    <!-- Body -->
+    <div class="popup-body">
+      <p class="popup-message">{{ config.message }}</p>
+    </div>
+
+    <!-- Footer with buttons -->
+    <div class="popup-footer">
+      <button
+        *ngIf="config.type === PopupType.CONFIRM"
+        type="button"
+        class="btn btn-secondary"
+        (click)="onCancel()">
+        {{ config.cancelText }}
+      </button>
+
+      <button
+        type="button"
+        class="btn"
+        [ngClass]="{
+          'btn-primary': config.variant !== 'error',
+          'btn-danger': config.variant === 'error',
+          'btn-success': config.variant === 'success'
+        }"
+        (click)="onConfirm()"
+        autofocus>
+        {{ config.confirmText }}
+      </button>
+    </div>
+  </div>
+</div>
