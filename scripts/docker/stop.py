@@ -9,18 +9,20 @@ def main():
     parser = argparse.ArgumentParser(description="Stop Docker Compose services")
     parser.add_argument("--remove-volumes", "-v", action="store_true",
                        help="Remove volumes as well (WARNING: deletes data)")
-    parser.add_argument("--ngrok", action="store_true",
-                       help="Also stop ngrok tunnels")
+    parser.add_argument("--no-ngrok", action="store_true",
+                       help="Exclude ngrok tunnels from stop (ngrok is included by default)")
 
     args = parser.parse_args()
 
     # Base command
     cmd = ["docker", "compose"]
 
-    # Add ngrok profile if requested
-    if args.ngrok:
+    # Add ngrok profile by default (unless --no-ngrok is specified)
+    if not args.no_ngrok:
         cmd.extend(["--profile", "ngrok"])
         print("Including ngrok tunnels in stop command...")
+    else:
+        print("Stopping without ngrok tunnels (--no-ngrok specified)")
 
     cmd.append("down")
 

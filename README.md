@@ -1,33 +1,56 @@
 # Chatterbox TTS - Text-to-Speech UI
 
-A professional text-to-speech system using **Resemble AI Chatterbox**, built with clean architecture principles. Features GPU-accelerated synthesis, zero-shot voice cloning, FastAPI backend, and Angular frontend.
+A professional GPU-accelerated text-to-speech system using **Resemble AI Chatterbox**, built with clean architecture principles. Features multiple TTS models, zero-shot voice cloning, FastAPI backend, and Angular frontend.
+
+## Table of Contents
+
+- [Features](#features)
+- [Architecture](#architecture)
+- [System Requirements](#system-requirements)
+- [Installation](#installation)
+- [Running the Application](#running-the-application)
+- [Docker Deployment](#docker-deployment)
+- [API Endpoints](#api-endpoints)
+- [Frontend](#frontend)
+- [Configuration](#configuration)
+- [Chatterbox TTS Models](#chatterbox-tts-models)
+- [Troubleshooting](#troubleshooting)
+- [Scripts Reference](#scripts-reference)
+- [License](#license)
+- [Credits](#credits)
 
 ## Features
 
-### Core Features
+### Core TTS Features
+
 - **GPU-Accelerated TTS**: Uses CUDA for fast audio synthesis with NVIDIA RTX GPUs
 - **Zero-Shot Voice Cloning**: Clone any voice from a short reference audio (~10 seconds)
 - **Multiple TTS Models**: Choose from turbo (fastest), standard (best quality), or multilingual (23+ languages)
 - **Paralinguistic Tags**: Add natural sounds like `[laugh]`, `[cough]`, `[chuckle]` to synthesized speech
+- **Parameter Tuning**: CFG weight and exaggeration controls for voice customization
+
+### Application Features
+
 - **Clean Architecture**: Domain-driven design with clear separation of concerns
 - **REST API**: FastAPI with automatic OpenAPI documentation
-- **Synthesis History**: SQLite database for storing synthesis history
+- **Synthesis History**: SQLite/PostgreSQL database for storing synthesis history
 - **On-Premises Deployment**: All data stored locally, no cloud dependencies
+- **Dark Mode UI**: Modern, clean interface with dark theme
 
 ### Frontend Features
-- **Text Input**: Enter text to synthesize with character count and validation
+
+- **Text Input**: Enter text to synthesize with character count and validation (up to 5000 characters)
 - **Voice Reference Upload**: Upload audio files for voice cloning (5-30 seconds)
 - **Model Selection**: Choose between turbo, standard, and multilingual models
 - **Synthesis Parameters**: Adjust CFG weight and exaggeration for fine-tuning
 - **Audio Playback**: Listen to synthesized audio with play/pause controls
-- **Download**: Download synthesized audio files
+- **Download**: Download synthesized audio files (WAV format)
 - **History View**: Browse and manage previous syntheses
 - **Voice Library**: Manage uploaded voice references
-- **Dark Mode UI**: Modern, clean interface with dark theme
 
 ## Architecture
 
-The project follows clean architecture principles:
+The project follows clean architecture principles with strict dependency rules:
 
 ```
 src/
@@ -39,14 +62,110 @@ src/
     └── frontend/     # Angular web application
 ```
 
+### Clean Architecture Layers
+
+```
+Domain Layer (Inner)
+  ↓ depends on nothing
+Application Layer
+  ↓ depends on Domain only
+Infrastructure Layer
+  ↓ depends on Domain interfaces
+Presentation Layer (Outer)
+  ↓ depends on all layers
+```
+
+**Critical Rule**: Domain entities NEVER import from infrastructure or presentation. All external dependencies are injected via interfaces.
+
+### Backend Structure
+
+```
+src/
+├── domain/                      # Pure business logic
+│   ├── entities/               # Synthesis, VoiceReference (dataclasses)
+│   ├── repositories/           # Abstract repository interfaces
+│   ├── services/              # Abstract service interfaces (TTSService)
+│   └── exceptions/            # Domain-specific exceptions
+│
+├── application/                # Use cases orchestrate domain logic
+│   ├── use_cases/             # SynthesizeTextUseCase, etc.
+│   └── dto/                   # Data transfer objects
+│
+├── infrastructure/             # External implementations
+│   ├── persistence/
+│   │   ├── models/            # SQLAlchemy ORM models
+│   │   └── repositories/      # Repository implementations
+│   ├── services/              # ChatterboxService (TTS implementation)
+│   ├── config/                # Settings and configuration
+│   └── storage/               # LocalFileStorage for audio files
+│
+└── presentation/
+    ├── api/                   # FastAPI routers, schemas, dependencies
+    └── frontend/             # Angular SPA
+```
+
+### Frontend Structure
+
+```
+src/presentation/frontend/
+├── src/
+│   ├── app/
+│   │   ├── core/                  # Core services and models
+│   │   │   ├── models/           # TypeScript interfaces
+│   │   │   └── services/         # API and state management
+│   │   ├── features/              # Feature modules
+│   │   │   ├── synthesis/        # TTS synthesis component
+│   │   │   ├── voice-library/    # Voice reference management
+│   │   │   └── history/          # Synthesis history
+│   │   ├── shared/               # Shared components
+│   │   ├── app.component.*       # Root component
+│   │   ├── app.routes.ts         # Routing configuration
+│   │   └── app.config.ts         # App configuration
+│   ├── environments/              # Environment configurations
+│   └── styles.css                # Global styles
+├── angular.json                   # Angular CLI configuration
+├── package.json                   # Dependencies
+└── tsconfig.json                 # TypeScript configuration
+```
+
+### Database Schema
+
+```
+voice_references
+  - id (PK)
+  - name
+  - description
+  - file_path
+  - duration_seconds
+  - created_at
+
+syntheses
+  - id (PK)
+  - text
+  - model (turbo/standard/multilingual)
+  - voice_reference_id (FK → voice_references.id, SET NULL)
+  - status (pending/processing/completed/failed)
+  - language
+  - audio_file_path
+  - duration_seconds
+  - cfg_weight
+  - exaggeration
+  - created_at
+  - completed_at
+  - error_message
+  - processing_time_seconds
+```
+
 ## System Requirements
 
 ### Hardware
+
 - **GPU**: NVIDIA GPU with CUDA support (required for fast synthesis)
 - **RAM**: Minimum 8GB (16GB recommended)
 - **Disk**: Sufficient space for audio files and Chatterbox models (~500MB per model)
 
 ### Software
+
 - **Python**: 3.11 (required for Docker, 3.9+ for local)
 - **CUDA**: CUDA 12.8 or higher (required for RTX 5090 and newer GPUs)
 - **PyTorch**: 2.9.1+cu128 (verified working with RTX 5090)
@@ -133,17 +252,17 @@ cd ../../..
 
 ```bash
 # Copy environment template
-cp .env.example .env
+cp src/presentation/api/.env.example src/presentation/api/.env
 ```
 
-Edit `.env` to configure:
+Edit `src/presentation/api/.env` to configure:
 - `HF_TOKEN`: **Required** - HuggingFace token for model downloads (get from https://huggingface.co/settings/tokens)
 - `TTS_DEFAULT_MODEL`: Model (turbo/standard/multilingual, default: turbo)
 - `TTS_DEVICE`: cuda or cpu (default: cuda)
 - `TTS_DEFAULT_CFG_WEIGHT`: CFG weight 0.0-1.0 (default: 0.5)
 - `TTS_DEFAULT_EXAGGERATION`: Exaggeration 0.0-1.0+ (default: 0.5)
 
-**Important**: The HuggingFace token is required for downloading Chatterbox models. Get your free token from https://huggingface.co/settings/tokens
+**Important**: The HuggingFace token is required for downloading Chatterbox models.
 
 ### 8. Initialize Database
 
@@ -178,11 +297,14 @@ cd src/presentation/frontend
 ng serve --port 4201
 ```
 
-The servers will be available at:
-- **Backend API**: http://localhost:8002
-- **API Docs**: http://localhost:8002/docs
-- **Health Check**: http://localhost:8002/api/v1/health
-- **Frontend**: http://localhost:4201
+### Access Points
+
+| Service | URL |
+|---------|-----|
+| **Frontend** | http://localhost:4201 |
+| **Backend API** | http://localhost:8002 |
+| **API Docs (Swagger)** | http://localhost:8002/docs |
+| **Health Check** | http://localhost:8002/api/v1/health |
 
 ### Stop Servers
 
@@ -193,7 +315,7 @@ python scripts/server/stop_all.py
 
 ## Docker Deployment
 
-For production deployment or containerized development, use Docker:
+For production deployment or containerized development, use Docker with GPU support.
 
 ### Prerequisites
 
@@ -201,12 +323,30 @@ For production deployment or containerized development, use Docker:
 - NVIDIA Container Toolkit (for GPU support)
 - 15GB+ free disk space
 
+#### Install NVIDIA Container Toolkit
+
+```bash
+# Ubuntu/Debian
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+  sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+  sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
+sudo nvidia-ctk runtime configure --runtime=docker
+sudo systemctl restart docker
+
+# Verify GPU access
+docker run --rm --gpus all nvidia/cuda:12.8.0-base-ubuntu22.04 nvidia-smi
+```
+
 ### Quick Start
 
 ```bash
 # 1. Configure environment variables
-cp .env.docker .env
-# Edit .env and set secure POSTGRES_PASSWORD
+cp src/presentation/api/.env.example src/presentation/api/.env
+# Edit src/presentation/api/.env:
+#   - Set HF_TOKEN (required for model downloads)
+#   - Set NGROK_AUTHTOKEN (optional, or use --no-ngrok flag)
 
 # 2. Build and run all services
 python scripts/docker/run.py --build
@@ -218,8 +358,6 @@ python scripts/docker/run.py --build
 ```
 
 ### Docker Management Scripts
-
-All Docker operations are managed via Python scripts in `scripts/docker/`:
 
 ```bash
 # Build images
@@ -248,7 +386,39 @@ python scripts/docker/shell.py backend      # Backend shell
 python scripts/docker/clean.py --all        # Remove everything
 ```
 
-For detailed Docker deployment guide, see [DOCKER.md](DOCKER.md).
+### Docker Architecture
+
+| Service | Image | Port |
+|---------|-------|------|
+| **postgres** | PostgreSQL 15 | 5433 (external), 5432 (internal) |
+| **backend** | FastAPI + CUDA 12.8 | 8002 |
+| **frontend** | Angular ng serve | 4201 |
+
+### Docker Volumes
+
+| Volume | Purpose |
+|--------|---------|
+| `chatterbox-postgres-data` | Database |
+| `chatterbox-audio-outputs` | Synthesized audio |
+| `chatterbox-voice-references` | Voice reference files |
+| `chatterbox-model-cache` | Chatterbox TTS models (~3.8GB per model) |
+
+### Verify GPU Access in Container
+
+```bash
+python scripts/docker/shell.py backend
+python -c "import torch; print(f'CUDA: {torch.cuda.is_available()}, GPU: {torch.cuda.get_device_name(0)}')"
+```
+
+### Database Backup
+
+```bash
+# Backup PostgreSQL
+docker exec chatterbox-postgres pg_dump -U chatterbox chatterbox_tts > backup.sql
+
+# Restore
+cat backup.sql | docker exec -i chatterbox-postgres psql -U chatterbox -d chatterbox_tts
+```
 
 ## API Endpoints
 
@@ -388,6 +558,86 @@ Response:
 }
 ```
 
+## Frontend
+
+### Usage
+
+#### 1. Text-to-Speech Synthesis
+
+- Navigate to the synthesis page
+- Enter text to synthesize (up to 5000 characters)
+- Select a voice reference (optional, for voice cloning)
+- Choose a TTS model (turbo, standard, multilingual)
+- Adjust CFG weight and exaggeration parameters
+- Click "Synthesize" to generate audio
+
+#### 2. Voice Library
+
+- Upload voice reference audio (5-30 seconds recommended, ~10s ideal)
+- Preview and manage uploaded voice references
+- Delete unused voice references
+
+#### 3. View History
+
+- See all past syntheses with status indicators
+- Play or download generated audio
+- Delete old syntheses
+
+### Supported Audio Formats
+
+For voice reference uploads:
+- WAV (audio/wav)
+- MP3 (audio/mpeg)
+- FLAC (audio/flac)
+- OGG (audio/ogg)
+
+Maximum file size: 10MB
+Recommended duration: ~10 seconds
+
+### Environment Configuration
+
+The Angular frontend uses **TypeScript environment files** for configuration:
+
+- **Development**: `src/environments/environment.ts`
+- **Production**: `src/environments/environment.prod.ts`
+
+```typescript
+// environment.ts
+export const environment = {
+  production: false,
+  apiUrl: 'http://localhost:8002/api/v1'
+};
+```
+
+To change the API URL, edit the environment files and restart the dev server.
+
+## Configuration
+
+### Environment Variables
+
+All environment variables are configured in `src/presentation/api/.env`:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `HF_TOKEN` | (required) | HuggingFace token for model downloads |
+| `TTS_DEFAULT_MODEL` | turbo | Default TTS model |
+| `TTS_DEVICE` | cuda | Device (cuda/cpu) |
+| `TTS_DEFAULT_CFG_WEIGHT` | 0.5 | Default CFG weight |
+| `TTS_DEFAULT_EXAGGERATION` | 0.5 | Default exaggeration |
+| `DATABASE_URL` | sqlite:///./chatterbox_tts.db | Database connection |
+| `AUDIO_OUTPUT_DIR` | ./audio_outputs | Output directory |
+| `VOICE_REFERENCE_DIR` | ./voice_references | Voice reference directory |
+| `API_PORT` | 8002 | API port |
+| `CORS_ORIGINS` | ["http://localhost:4201"] | Allowed origins |
+
+### Port Configuration
+
+| Service | Port |
+|---------|------|
+| Backend API | 8002 |
+| Frontend | 4201 |
+| PostgreSQL (Docker) | 5433 (external) |
+
 ## Chatterbox TTS Models
 
 | Model | Parameters | Cache Size | Speed | Best For |
@@ -402,23 +652,6 @@ Response:
 - **For fast synthesis**: Use `turbo` for real-time applications
 - **For best quality**: Use `standard` with CFG and exaggeration tuning
 - **For multiple languages**: Use `multilingual` (supports 23+ languages)
-
-## Configuration
-
-### Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `HF_TOKEN` | (required) | HuggingFace token for model downloads |
-| `TTS_DEFAULT_MODEL` | turbo | Default TTS model |
-| `TTS_DEVICE` | cuda | Device (cuda/cpu) |
-| `TTS_DEFAULT_CFG_WEIGHT` | 0.5 | Default CFG weight |
-| `TTS_DEFAULT_EXAGGERATION` | 0.5 | Default exaggeration |
-| `DATABASE_URL` | sqlite:///./chatterbox_tts.db | Database connection |
-| `AUDIO_OUTPUT_DIR` | ./audio_outputs | Output directory |
-| `VOICE_REFERENCE_DIR` | ./voice_references | Voice reference directory |
-| `API_PORT` | 8002 | API port |
-| `CORS_ORIGINS` | ["http://localhost:4201"] | Allowed origins |
 
 ## Troubleshooting
 
@@ -482,13 +715,58 @@ If voice reference upload fails with "torchcodec" or audio reading errors:
 pip install soundfile
 ```
 
+### Frontend Connection Issues
+
+If you see connection errors:
+1. Ensure backend is running on http://localhost:8002
+2. Check CORS settings in backend allow http://localhost:4201
+3. Verify `environment.ts` has correct API URL
+
+### Frontend Build Errors
+
+If you encounter build errors:
+1. Delete `node_modules` and `package-lock.json`
+2. Run `npm install` again
+3. Clear Angular cache: `npm run ng cache clean`
+
+## Scripts Reference
+
+```
+scripts/
+├── setup/                    # Setup & initialization
+│   ├── init_db.py            # Initialize database
+│   ├── install_uv.py         # Install UV package manager
+│   └── preload_tts_models.py # Pre-download TTS models
+├── server/                   # Server management
+│   ├── run_backend.py        # Start backend (port 8002)
+│   ├── run_frontend.py       # Start frontend (port 4201)
+│   ├── run_dev.py            # Start with .env config
+│   ├── stop_backend.py       # Stop backend
+│   ├── stop_frontend.py      # Stop frontend
+│   └── stop_all.py           # Stop all servers
+├── maintenance/              # Database utilities
+│   ├── check_db_status.py    # Check database status
+│   ├── show_db_contents.py   # Inspect database
+│   └── health_check.py       # System health check
+├── docker/                   # Docker management
+│   ├── build.py              # Build images
+│   ├── run.py                # Start services
+│   ├── stop.py               # Stop services
+│   ├── logs.py               # View logs
+│   ├── shell.py              # Open container shell
+│   ├── clean.py              # Clean resources
+│   └── rebuild.py            # Rebuild and restart
+├── git/                      # Git utilities
+│   └── smart_commit.py       # Smart commit helper
+├── testing/                  # Testing utilities
+│   └── test_features.py      # Feature tests
+└── utils/                    # Shared utilities
+    └── terminal.py           # Terminal colors
+```
+
 ## License
 
 This project is for educational and internal use.
-
-## Support
-
-For issues or questions, please refer to the project documentation or create an issue in the repository.
 
 ## Credits
 

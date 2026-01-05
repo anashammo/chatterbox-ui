@@ -44,7 +44,7 @@ services:
       - chatterbox-model-cache:/root/.cache/huggingface
     environment:
       # Database configuration (PostgreSQL)
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-chatterbox}:${POSTGRES_PASSWORD:-chatterbox_secure_password}@postgres:5432/${POSTGRES_DB:-chatterbox_tts}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-chatterbox}:${POSTGRES_PASSWORD:-chatterbox_secure_password}@postgres:5432/${POSTGRES_DB:-chatterbox_tts}?client_encoding=utf8
 
       # GPU configuration
       - CUDA_VISIBLE_DEVICES=0
@@ -133,8 +133,8 @@ services:
   ngrok-backend:
     image: ngrok/ngrok:latest
     container_name: ngrok-chatterbox-backend
-    environment:
-      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    env_file:
+      - ./src/presentation/api/.env
     command: http backend:8002 --url=anas-hammo-chatterbox-backend.ngrok.dev
     ports:
       - "4040:4040"
@@ -151,8 +151,8 @@ services:
   ngrok-frontend:
     image: ngrok/ngrok:latest
     container_name: ngrok-chatterbox-frontend
-    environment:
-      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    env_file:
+      - ./src/presentation/api/.env
     command: http frontend:4201 --url=anas-hammo-chatterbox-frontend.ngrok.dev
     ports:
       - "4041:4040"

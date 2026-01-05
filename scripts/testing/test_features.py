@@ -1,8 +1,8 @@
 """
-Automated testing script for UI enhancement features
+Automated testing script for Chatterbox TTS features
 
 Tests backend endpoints and validates responses without browser interaction.
-Verifies the new features implemented in the UI enhancements branch.
+Verifies core TTS functionality and system setup.
 
 Usage:
     python scripts/testing/test_features.py
@@ -22,7 +22,7 @@ sys.path.insert(0, str(project_root))
 from scripts.utils.terminal import Colors
 
 # Test configuration
-API_BASE_URL = "http://localhost:8001/api/v1"
+API_BASE_URL = "http://localhost:8002/api/v1"
 TIMEOUT = 10  # seconds
 
 
@@ -41,13 +41,15 @@ def print_test(name: str, passed: bool, message: str = ""):
         print(f"       {Colors.YELLOW}{message}{Colors.RESET}")
 
 
-def test_backend_health() -> bool:
+def test_backend_health() -> Tuple[bool, str]:
     """Test if backend server is running"""
     try:
-        response = requests.get(f"{API_BASE_URL.replace('/api/v1', '')}/docs", timeout=TIMEOUT)
-        return response.status_code == 200
-    except requests.exceptions.RequestException:
-        return False
+        response = requests.get(f"{API_BASE_URL}/health", timeout=TIMEOUT)
+        if response.status_code == 200:
+            return True, "Backend healthy at http://localhost:8002"
+        return False, f"Health check returned status {response.status_code}"
+    except requests.exceptions.RequestException as e:
+        return False, f"Cannot reach backend server: {str(e)}"
 
 
 def test_api_endpoints() -> List[Tuple[str, bool, str]]:
@@ -55,15 +57,16 @@ def test_api_endpoints() -> List[Tuple[str, bool, str]]:
     results = []
 
     endpoints = [
-        ("GET /docs", "/docs", 200),
-        ("GET /api/v1/transcriptions", f"{API_BASE_URL}/transcriptions", 200),
+        ("GET /docs", "http://localhost:8002/docs", 200),
+        ("GET /api/v1/health", f"{API_BASE_URL}/health", 200),
+        ("GET /api/v1/syntheses", f"{API_BASE_URL}/syntheses", 200),
+        ("GET /api/v1/voice-references", f"{API_BASE_URL}/voice-references", 200),
         ("GET /api/v1/models/available", f"{API_BASE_URL}/models/available", 200),
     ]
 
     for name, url, expected_status in endpoints:
         try:
-            full_url = url if url.startswith('http') else f"{API_BASE_URL.replace('/api/v1', '')}{url}"
-            response = requests.get(full_url, timeout=TIMEOUT)
+            response = requests.get(url, timeout=TIMEOUT)
             passed = response.status_code == expected_status
             message = f"Status: {response.status_code}" if not passed else ""
             results.append((name, passed, message))
@@ -73,46 +76,61 @@ def test_api_endpoints() -> List[Tuple[str, bool, str]]:
     return results
 
 
-def test_audio_download_endpoint() -> Tuple[bool, str]:
-    """
-    Test audio download endpoint structure (Feature #1)
-    Cannot test actual .webm -> .wav conversion without a real transcription
-    """
+def test_models_endpoint() -> Tuple[bool, str]:
+    """Test models endpoint returns valid model list"""
     try:
-        # Just verify the endpoint exists by checking API docs
-        response = requests.get(f"{API_BASE_URL.replace('/api/v1', '')}/docs", timeout=TIMEOUT)
+        response = requests.get(f"{API_BASE_URL}/models/available", timeout=TIMEOUT)
         if response.status_code == 200:
-            # Check if the endpoint is documented
-            if "transcriptions/{transcription_id}/audio" in response.text:
-                return True, "Audio download endpoint documented in API"
-            else:
-                return False, "Audio download endpoint not found in API docs"
-        return False, f"Could not access API docs (status: {response.status_code})"
+            data = response.json()
+            # Handle both {"models": [...]} and [...] formats
+            models = data.get('models', data) if isinstance(data, dict) else data
+            if isinstance(models, list) and len(models) > 0:
+                model_names = [m.get('name', m) if isinstance(m, dict) else m for m in models]
+                return True, f"Available models: {', '.join(model_names)}"
+            return False, "No models returned"
+        return False, f"Status: {response.status_code}"
     except requests.exceptions.RequestException as e:
         return False, f"Error: {str(e)}"
 
 
 def check_database_exists() -> Tuple[bool, str]:
-    """Check if database file exists"""
-    db_path = project_root / "whisper_transcriptions.db"
+    """Check if database is accessible (via API or local file)"""
+    # First try API - works for both Docker (PostgreSQL) and local (SQLite)
+    try:
+        response = requests.get(f"{API_BASE_URL}/syntheses?limit=1", timeout=TIMEOUT)
+        if response.status_code == 200:
+            return True, "Database accessible via API (Docker PostgreSQL or local SQLite)"
+    except requests.exceptions.RequestException:
+        pass
+
+    # Fallback: check local SQLite file (local development only)
+    db_path = project_root / "chatterbox_tts.db"
     if db_path.exists():
-        size_mb = db_path.stat().st_size / (1024 * 1024)
-        return True, f"Database exists ({size_mb:.2f} MB)"
-    return False, "Database file not found"
+        size_kb = db_path.stat().st_size / 1024
+        return True, f"SQLite database exists ({size_kb:.2f} KB)"
+    return False, "Database not accessible (API check failed, no local SQLite)"
 
 
-def check_uploads_directory() -> Tuple[bool, str]:
-    """Check if uploads directory exists"""
-    uploads_path = project_root / "uploads"
-    if uploads_path.exists():
-        # Count subdirectories (audio file groups)
-        subdirs = [d for d in uploads_path.iterdir() if d.is_dir()]
-        return True, f"Uploads directory exists ({len(subdirs)} audio file groups)"
-    return False, "Uploads directory not found"
+def check_audio_outputs_directory() -> Tuple[bool, str]:
+    """Check if audio outputs directory exists"""
+    audio_path = project_root / "audio_outputs"
+    if audio_path.exists():
+        files = list(audio_path.glob("*.wav"))
+        return True, f"Audio outputs directory exists ({len(files)} .wav files)"
+    return False, "Audio outputs directory not found (will be created on first synthesis)"
+
+
+def check_voice_references_directory() -> Tuple[bool, str]:
+    """Check if voice references directory exists"""
+    voice_ref_path = project_root / "voice_references"
+    if voice_ref_path.exists():
+        files = list(voice_ref_path.iterdir())
+        return True, f"Voice references directory exists ({len(files)} files)"
+    return False, "Voice references directory not found (will be created on first upload)"
 
 
 def check_frontend_build() -> Tuple[bool, str]:
-    """Check if frontend is built"""
+    """Check if frontend dependencies are installed"""
     frontend_path = project_root / "src" / "presentation" / "frontend"
     node_modules = frontend_path / "node_modules"
 
@@ -122,41 +140,75 @@ def check_frontend_build() -> Tuple[bool, str]:
     return True, "Frontend dependencies installed"
 
 
-def check_whisper_models() -> Tuple[bool, str]:
-    """Check if Whisper models are downloaded"""
-    cache_dir = Path.home() / ".cache" / "whisper"
+def check_env_file() -> Tuple[bool, str]:
+    """Check if .env file exists with required settings"""
+    env_path = project_root / "src" / "presentation" / "api" / ".env"
 
-    if not cache_dir.exists():
-        return False, "Whisper cache directory not found (no models downloaded)"
+    if not env_path.exists():
+        return False, ".env not found (copy from .env.example)"
 
-    # Check for common model files
-    models = ["tiny.pt", "base.pt", "small.pt", "medium.pt", "large-v3.pt", "large-v3-turbo.pt"]
-    found_models = [m for m in models if (cache_dir / m).exists()]
+    # Check for HF_TOKEN
+    content = env_path.read_text()
+    if "HF_TOKEN=" in content:
+        # Check if it has a value
+        for line in content.split('\n'):
+            if line.startswith('HF_TOKEN=') and len(line.split('=', 1)[1].strip()) > 0:
+                return True, ".env exists with HF_TOKEN configured"
+        return False, ".env exists but HF_TOKEN is empty"
 
-    if found_models:
-        return True, f"Found {len(found_models)} model(s): {', '.join([m.replace('.pt', '') for m in found_models])}"
+    return False, ".env exists but missing HF_TOKEN"
 
-    return False, "No Whisper models found in cache"
+
+def check_chatterbox_models() -> Tuple[bool, str]:
+    """Check if Chatterbox models are available (via API or local cache)"""
+    # First check via API - works for Docker where models are in container
+    try:
+        response = requests.get(f"{API_BASE_URL}/models/available", timeout=TIMEOUT)
+        if response.status_code == 200:
+            data = response.json()
+            models = data.get('models', data) if isinstance(data, dict) else data
+            if isinstance(models, list) and len(models) > 0:
+                model_names = [m.get('name', 'unknown') for m in models]
+                return True, f"Models available via API: {', '.join(model_names)}"
+    except requests.exceptions.RequestException:
+        pass
+
+    # Fallback: check local HuggingFace cache (local development only)
+    cache_dir = Path.home() / ".cache" / "huggingface" / "hub"
+    if cache_dir.exists():
+        chatterbox_dirs = list(cache_dir.glob("models--ResembleAI--chatterbox*"))
+        if chatterbox_dirs:
+            model_names = [d.name.replace("models--ResembleAI--", "") for d in chatterbox_dirs]
+            return True, f"Found {len(chatterbox_dirs)} local model(s): {', '.join(model_names)}"
+
+    return False, "Models not accessible (API check failed, no local cache)"
 
 
 def run_all_tests():
     """Run all automated tests"""
-    print_header("Automated Feature Testing")
+    print_header("Chatterbox TTS - Automated Testing")
 
     total_tests = 0
     passed_tests = 0
 
-    # Test 1: Backend Health
-    print_header("1. Backend Server Health")
-    is_healthy = test_backend_health()
-    print_test("Backend server is running", is_healthy,
-               "Server accessible at http://localhost:8001" if is_healthy else "Cannot reach backend server")
+    # Test 1: Environment Setup
+    print_header("1. Environment Setup")
+    passed, message = check_env_file()
+    print_test(".env file configured", passed, message)
     total_tests += 1
-    if is_healthy:
+    if passed:
         passed_tests += 1
 
-    # Test 2: API Endpoints
-    print_header("2. Core API Endpoints")
+    # Test 2: Backend Health
+    print_header("2. Backend Server Health")
+    passed, message = test_backend_health()
+    print_test("Backend server is running", passed, message)
+    total_tests += 1
+    if passed:
+        passed_tests += 1
+
+    # Test 3: API Endpoints
+    print_header("3. Core API Endpoints")
     endpoint_results = test_api_endpoints()
     for name, passed, message in endpoint_results:
         print_test(name, passed, message)
@@ -164,43 +216,48 @@ def run_all_tests():
         if passed:
             passed_tests += 1
 
-    # Test 3: Audio Download Endpoint (Feature #1)
-    print_header("3. Audio Download Endpoint (Feature #1)")
-    passed, message = test_audio_download_endpoint()
-    print_test("Audio download endpoint exists", passed, message)
-    print(f"       {Colors.YELLOW}Note: .webm -> .wav conversion requires manual testing with actual file{Colors.RESET}")
+    # Test 4: Models Endpoint
+    print_header("4. TTS Models")
+    passed, message = test_models_endpoint()
+    print_test("Models endpoint returns data", passed, message)
     total_tests += 1
     if passed:
         passed_tests += 1
 
-    # Test 4: Database
-    print_header("4. Database Status")
+    # Test 5: Database
+    print_header("5. Database Status")
     passed, message = check_database_exists()
     print_test("Database file exists", passed, message)
     total_tests += 1
     if passed:
         passed_tests += 1
 
-    # Test 5: Uploads Directory
-    print_header("5. File Storage")
-    passed, message = check_uploads_directory()
-    print_test("Uploads directory exists", passed, message)
+    # Test 6: File Storage
+    print_header("6. File Storage")
+    passed, message = check_audio_outputs_directory()
+    print_test("Audio outputs directory", passed, message)
     total_tests += 1
     if passed:
         passed_tests += 1
 
-    # Test 6: Frontend Build
-    print_header("6. Frontend Status")
+    passed, message = check_voice_references_directory()
+    print_test("Voice references directory", passed, message)
+    total_tests += 1
+    if passed:
+        passed_tests += 1
+
+    # Test 7: Frontend
+    print_header("7. Frontend Status")
     passed, message = check_frontend_build()
     print_test("Frontend dependencies installed", passed, message)
     total_tests += 1
     if passed:
         passed_tests += 1
 
-    # Test 7: Whisper Models
-    print_header("7. Whisper Models")
-    passed, message = check_whisper_models()
-    print_test("Whisper models downloaded", passed, message)
+    # Test 8: Chatterbox Models
+    print_header("8. Chatterbox Models Cache")
+    passed, message = check_chatterbox_models()
+    print_test("Chatterbox models downloaded", passed, message)
     total_tests += 1
     if passed:
         passed_tests += 1
@@ -227,11 +284,11 @@ def run_all_tests():
         print(f"{Colors.YELLOW}Note: Backend must be running for API tests to pass.{Colors.RESET}")
 
     print("\n" + "=" * 60)
-    print(f"{Colors.CYAN}Manual Testing Required:{Colors.RESET}")
-    print("  - Feature #2: Audio controls in header (History view)")
-    print("  - Feature #3: LLM enhancement badges (History view)")
-    print("  - Feature #4: Enhanced text preview (History view)")
-    print("  - Feature #5-8: Details view changes (readonly, badges, styles)")
+    print(f"{Colors.CYAN}Manual Testing Recommended:{Colors.RESET}")
+    print("  - Text-to-speech synthesis with different models")
+    print("  - Voice reference upload and voice cloning")
+    print("  - Audio playback and download")
+    print("  - Synthesis history and management")
     print(f"{Colors.CYAN}{'=' * 60}{Colors.RESET}\n")
 
     return passed_tests == total_tests

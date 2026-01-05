@@ -11,15 +11,15 @@ def main():
                        help="Service name (backend, frontend, postgres, ngrok-backend, ngrok-frontend)")
     parser.add_argument("--follow", "-f", action="store_true", help="Follow log output")
     parser.add_argument("--tail", type=int, help="Number of lines to show from end")
-    parser.add_argument("--ngrok", action="store_true", help="Include ngrok services")
+    parser.add_argument("--no-ngrok", action="store_true", help="Exclude ngrok services (ngrok is included by default)")
 
     args = parser.parse_args()
 
     # Base command
     cmd = ["docker", "compose"]
 
-    # Add ngrok profile if requested
-    if args.ngrok:
+    # Add ngrok profile by default (unless --no-ngrok is specified)
+    if not args.no_ngrok:
         cmd.extend(["--profile", "ngrok"])
 
     cmd.append("logs")

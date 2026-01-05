@@ -15,13 +15,13 @@ def main():
                        help="Remove images and volumes (WARNING: deletes everything)")
     parser.add_argument("--images", action="store_true", help="Remove images only")
     parser.add_argument("--volumes", action="store_true", help="Remove volumes only")
-    parser.add_argument("--ngrok", action="store_true", help="Include ngrok services in cleanup")
+    parser.add_argument("--no-ngrok", action="store_true", help="Exclude ngrok services from cleanup (ngrok is included by default)")
 
     args = parser.parse_args()
 
     # Base command
     base_cmd = ["docker", "compose"]
-    if args.ngrok:
+    if not args.no_ngrok:
         base_cmd.extend(["--profile", "ngrok"])
 
     if args.all:

@@ -134,7 +134,7 @@ You **must review and update**:
 - `CLAUDE.md`
 - All relevant `*.md` files
 - `scripts/`
-- `.env`, `.env.example`, env templates
+- `src/presentation/api/.env.example` (env template)
 
 Documentation drift is a **bug**.
 
@@ -177,12 +177,13 @@ Documentation drift is a **bug**.
 
 ### Environment Variables
 - `.env` files with real secrets:
+  - Location: `src/presentation/api/.env`
   - Must NOT be committed
   - Must be in `.gitignore`
 - Always maintain:
-  - `.env.example` with placeholders
+  - `src/presentation/api/.env.example` with placeholders
 - Every new env variable requires:
-  - `.env.example` update
+  - `src/presentation/api/.env.example` update
   - Documentation update
 
 ### Logs & Docker
@@ -450,7 +451,8 @@ python scripts/setup/init_db.py
 
 ```bash
 # Quick start
-cp .env.docker .env
+cp src/presentation/api/.env.example src/presentation/api/.env
+# Edit .env to set HF_TOKEN and NGROK_AUTHTOKEN
 python scripts/docker/run.py --build
 
 # Management scripts (scripts/docker/)
@@ -652,8 +654,11 @@ All commits include standardized footer:
 Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 ```
 
-Use semantic commit messages:
-- `Fix: Description` - Bug fixes
-- `Feat: Description` - New features
-- `Refactor: Description` - Code improvements without behavior change
-- `Docs: Description` - Documentation updates
+Use conventional commit messages (matching Section: Commit & PR Conventions):
+- `feat(scope): description` - New features
+- `fix(scope): description` - Bug fixes
+- `refactor(scope): description` - Code improvements without behavior change
+- `docs(scope): description` - Documentation updates
+- `test(scope): description` - Adding or updating tests
+- `chore(scope): description` - Maintenance tasks
+- `ci(scope): description` - CI/CD changes

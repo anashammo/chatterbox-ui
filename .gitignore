@@ -21,8 +21,9 @@ build/
 *.swp
 *.swo
 
-# Environment
+# Environment (secrets - never commit)
 .env
+src/presentation/api/.env
 *.local
 
 # Database

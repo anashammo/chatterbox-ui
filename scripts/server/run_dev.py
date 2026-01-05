@@ -1,48 +1,48 @@
 """
-Run the Whisper backend server in development mode.
+Run the Chatterbox TTS backend server in development mode.
 
 This script starts the FastAPI backend server using uvicorn with auto-reload
-enabled. It loads configuration from environment variables (.env file) and
-displays startup information.
+enabled. It loads configuration from environment variables and displays
+startup information.
 
 Difference from run_backend.py:
     - run_dev.py: Uses settings from .env file, respects all environment variables
-    - run_backend.py: Hardcoded to port 8001, simpler startup script
+    - run_backend.py: Hardcoded to port 8002, simpler startup script
 
 Configuration:
-    Settings are loaded from .env file via Settings class:
+    Settings are loaded from src/presentation/api/.env via Settings class:
     - API_HOST (default: 0.0.0.0)
-    - API_PORT (default: 8001)
-    - WHISPER_MODEL (default: base)
-    - WHISPER_DEVICE (default: cuda)
-    - LOG_LEVEL (default: info)
+    - API_PORT (default: 8002)
+    - TTS_DEFAULT_MODEL (default: turbo)
+    - TTS_DEVICE (default: cuda)
+    - LOG_LEVEL (default: INFO)
 
 Usage:
-    python scripts/run_dev.py
+    python scripts/server/run_dev.py
 
 Features:
     - Auto-reload on code changes (development mode)
     - Displays startup information (model, device, ports)
-    - Loads configuration from .env file
+    - Loads configuration from src/presentation/api/.env
     - Access API docs at http://localhost:{port}/docs
 
 Examples:
-    # Start server with default settings (port 8001)
-    python scripts/run_dev.py
+    # Start server with default settings (port 8002)
+    python scripts/server/run_dev.py
 
-    # Configure via .env file:
+    # Configure via src/presentation/api/.env:
     # API_PORT=8080
-    # WHISPER_MODEL=medium
-    # WHISPER_DEVICE=cpu
+    # TTS_DEFAULT_MODEL=standard
+    # TTS_DEVICE=cpu
     # Then run:
-    python scripts/run_dev.py
+    python scripts/server/run_dev.py
 
 Exit:
     Press CTRL+C to stop the server
 
 Note:
     Ensure database is initialized first:
-    python scripts/init_db.py
+    python scripts/setup/init_db.py
 """
 import uvicorn
 import sys
@@ -60,8 +60,8 @@ if __name__ == "__main__":
 
     print(f"Starting {settings.app_name} v{settings.app_version}")
     print(f"Server: {settings.api_host}:{settings.api_port}")
-    print(f"Whisper Model: {settings.whisper_model}")
-    print(f"Device: {settings.whisper_device}")
+    print(f"TTS Model: {settings.tts_default_model}")
+    print(f"Device: {settings.tts_device}")
     print(f"API Docs: http://{settings.api_host}:{settings.api_port}/docs")
     print("\nPress CTRL+C to stop the server\n")
 
