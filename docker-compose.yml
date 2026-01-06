@@ -70,6 +70,17 @@ services:
       # Hot-reload for development (set to false for production)
       - HOT_RELOAD=${HOT_RELOAD:-true}
 
+      # Performance optimization settings
+      - ENABLE_TORCH_COMPILE=${ENABLE_TORCH_COMPILE:-true}
+      - ENABLE_VOICE_CACHING=${ENABLE_VOICE_CACHING:-true}
+      - VOICE_CACHE_MAX_SIZE=${VOICE_CACHE_MAX_SIZE:-10}
+      - AUDIO_TRIM_SILENCE=${AUDIO_TRIM_SILENCE:-true}
+      - ENABLE_TEXT_CHUNKING=${ENABLE_TEXT_CHUNKING:-true}
+      - TTS_CHUNK_MAX_CHARS=${TTS_CHUNK_MAX_CHARS:-250}
+      - ENABLE_PERFORMANCE_LOGGING=${ENABLE_PERFORMANCE_LOGGING:-true}
+      - ENABLE_GPU_MEMORY_CLEANUP=${ENABLE_GPU_MEMORY_CLEANUP:-false}
+      - ENABLE_SDPA_ATTENTION=${ENABLE_SDPA_ATTENTION:-false}
+
       # Application settings
       - PYTHONUNBUFFERED=1
       - API_HOST=0.0.0.0

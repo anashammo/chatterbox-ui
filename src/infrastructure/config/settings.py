@@ -79,6 +79,44 @@ class Settings(BaseSettings):
         description="Maximum text length for synthesis in characters"
     )
 
+    # Performance Configuration
+    enable_torch_compile: bool = Field(
+        default=False,
+        description="Enable torch.compile() for JIT optimization (requires PyTorch 2.0+)"
+    )
+    enable_voice_caching: bool = Field(
+        default=True,
+        description="Enable voice reference tensor caching to reduce disk I/O"
+    )
+    voice_cache_max_size: int = Field(
+        default=10,
+        description="Maximum number of voice references to cache in memory"
+    )
+    audio_trim_silence: bool = Field(
+        default=True,
+        description="Trim leading/trailing silence from synthesized audio"
+    )
+    enable_text_chunking: bool = Field(
+        default=True,
+        description="Enable chunking of long text for synthesis"
+    )
+    tts_chunk_max_chars: int = Field(
+        default=250,
+        description="Maximum characters per chunk when text chunking is enabled"
+    )
+    enable_performance_logging: bool = Field(
+        default=True,
+        description="Enable detailed performance timing logs"
+    )
+    enable_gpu_memory_cleanup: bool = Field(
+        default=False,
+        description="Clear GPU cache after each synthesis (may impact performance)"
+    )
+    enable_sdpa_attention: bool = Field(
+        default=False,
+        description="Enable SDPA attention (experimental, requires Chatterbox PR #398)"
+    )
+
     # Logging Configuration
     log_level: str = Field(default="INFO", description="Logging level")
 

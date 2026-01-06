@@ -511,6 +511,51 @@ def _get_model(self, model_type: str):
 
 **Note**: Cache sizes include all model components (embeddings, tokenizers, etc.).
 
+## Performance Optimization
+
+The Chatterbox TTS service includes several configuration-controlled performance optimizations. All optimizations can be disabled via environment variables for instant rollback.
+
+### Configuration Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ENABLE_TORCH_COMPILE` | `false` | JIT compilation for 10-30% speedup (PyTorch 2.0+) |
+| `ENABLE_VOICE_CACHING` | `true` | Cache voice reference tensors in memory |
+| `VOICE_CACHE_MAX_SIZE` | `10` | Maximum cached voice references |
+| `AUDIO_TRIM_SILENCE` | `true` | Trim leading/trailing silence from output |
+| `ENABLE_TEXT_CHUNKING` | `true` | Chunk long text for better quality |
+| `TTS_CHUNK_MAX_CHARS` | `250` | Maximum characters per chunk |
+| `ENABLE_PERFORMANCE_LOGGING` | `true` | Detailed timing logs per synthesis stage |
+| `ENABLE_GPU_MEMORY_CLEANUP` | `false` | Clear GPU cache after each synthesis |
+| `ENABLE_SDPA_ATTENTION` | `false` | SDPA attention (experimental, requires PR #398) |
+
+### Performance Modules
+
+- `src/infrastructure/services/performance_monitor.py` - Timing utilities
+- `src/infrastructure/services/text_chunker.py` - Sentence-aware text chunking
+- `src/infrastructure/services/audio_utils.py` - Silence trimming, normalization, fades
+
+### Key Optimizations
+
+1. **torch.inference_mode()**: More efficient than `no_grad()` for inference
+2. **CUDA Synchronization**: Accurate GPU timing measurement
+3. **Voice Reference Caching**: LRU cache with file modification time validation
+4. **torch.compile()**: Optional JIT compilation with graceful fallback
+5. **Text Chunking**: Sentence-boundary aware chunking for long text
+6. **Audio Post-Processing**: Configurable silence trimming and fade in/out
+
+### Rollback
+
+To disable all performance optimizations:
+```bash
+ENABLE_TORCH_COMPILE=false
+ENABLE_VOICE_CACHING=false
+AUDIO_TRIM_SILENCE=false
+ENABLE_TEXT_CHUNKING=false
+ENABLE_PERFORMANCE_LOGGING=false
+ENABLE_GPU_MEMORY_CLEANUP=false
+```
+
 ## Known Issues & Fixes
 
 ### SDPA Attention Compatibility (transformers >= 4.36)
