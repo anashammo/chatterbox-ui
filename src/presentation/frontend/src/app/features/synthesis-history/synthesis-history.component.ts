@@ -50,6 +50,17 @@ export class SynthesisHistoryComponent implements OnInit, OnDestroy {
     this.synthesisService.loadSyntheses();
   }
 
+  loadHistory(): void {
+    this.error = null;
+    this.loadSyntheses();
+  }
+
+  formatDuration(seconds: number): string {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+
   viewSynthesis(synthesis: Synthesis): void {
     this.router.navigate(['/synthesis', synthesis.id]);
   }
@@ -115,5 +126,21 @@ export class SynthesisHistoryComponent implements OnInit, OnDestroy {
   truncateText(text: string, maxLength: number = 100): string {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
+  }
+
+  getModelIcon(model: string): string {
+    switch (model?.toLowerCase()) {
+      case 'turbo': return '⚡';
+      case 'standard': return '🎯';
+      case 'multilingual': return '🌍';
+      default: return '🔊';
+    }
+  }
+
+  isArabic(text: string): boolean {
+    if (!text) return false;
+    // Arabic Unicode range: \u0600-\u06FF (Arabic), \u0750-\u077F (Arabic Supplement)
+    const arabicPattern = /[\u0600-\u06FF\u0750-\u077F]/;
+    return arabicPattern.test(text);
   }
 }

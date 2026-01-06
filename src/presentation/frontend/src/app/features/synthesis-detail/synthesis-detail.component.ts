@@ -127,7 +127,34 @@ export class SynthesisDetailComponent implements OnInit, OnDestroy {
     return new Date(dateString).toLocaleString();
   }
 
+  formatDuration(seconds: number): string {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  getWordCount(text: string): number {
+    if (!text) return 0;
+    return text.trim().split(/\s+/).length;
+  }
+
   goBack(): void {
     this.router.navigate(['/history']);
+  }
+
+  getModelIcon(model: string): string {
+    switch (model?.toLowerCase()) {
+      case 'turbo': return '⚡';
+      case 'standard': return '🎯';
+      case 'multilingual': return '🌍';
+      default: return '🔊';
+    }
+  }
+
+  isArabic(text: string): boolean {
+    if (!text) return false;
+    // Arabic Unicode range: \u0600-\u06FF (Arabic), \u0750-\u077F (Arabic Supplement)
+    const arabicPattern = /[\u0600-\u06FF\u0750-\u077F]/;
+    return arabicPattern.test(text);
   }
 }

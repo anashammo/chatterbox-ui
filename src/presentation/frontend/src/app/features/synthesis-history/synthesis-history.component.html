@@ -1,87 +1,113 @@
 <div class="history-container">
+  <!-- Header -->
   <div class="header">
     <h1>Synthesis History</h1>
-    <a routerLink="/" class="btn btn-primary">New Synthesis</a>
+    <button class="btn btn-primary" routerLink="/">New Synthesis</button>
   </div>
 
-  <!-- Loading -->
-  <div class="loading" *ngIf="isLoading">
-    <div class="spinner-large"></div>
-    <p>Loading syntheses...</p>
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="isLoading && syntheses.length === 0">
+    <div class="spinner"></div>
+    <h3>Loading history...</h3>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-message" *ngIf="error">
+    <span>{{ error }}</span>
+    <button class="btn btn-primary" (click)="loadHistory()">Retry</button>
   </div>
 
   <!-- Empty State -->
-  <div class="empty-state" *ngIf="!isLoading && syntheses.length === 0">
-    <h2>No syntheses yet</h2>
-    <p>Create your first text-to-speech synthesis to get started.</p>
-    <a routerLink="/" class="btn btn-primary">Create Synthesis</a>
+  <div class="empty-state" *ngIf="!isLoading && syntheses.length === 0 && !error">
+    <div class="empty-icon">🔊</div>
+    <h3>No syntheses yet</h3>
+    <p>Click "New Synthesis" above to get started!</p>
   </div>
 
   <!-- Syntheses List -->
-  <div class="syntheses-list" *ngIf="!isLoading && syntheses.length > 0">
+  <div class="syntheses-list" *ngIf="syntheses.length > 0">
     <div
       class="synthesis-card"
       *ngFor="let synthesis of syntheses"
-      (click)="viewSynthesis(synthesis)"
     >
-      <div class="card-header">
-        <span class="status-badge" [ngClass]="getStatusClass(synthesis.status)">
-          {{ synthesis.status }}
+      <!-- Card Header -->
+      <div class="card-header-row">
+        <div class="card-info" (click)="viewSynthesis(synthesis)">
+          <div class="synthesis-id">ID: {{ synthesis.id }}</div>
+          <div class="card-badges">
+            <span class="status-badge" [ngClass]="getStatusClass(synthesis.status)">
+              {{ synthesis.status }}
+            </span>
+            <span class="model-badge" [ngClass]="'model-' + synthesis.model">
+              {{ getModelIcon(synthesis.model) }} {{ synthesis.model }}
+            </span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button
+            class="btn-control"
+            *ngIf="synthesis.status === 'completed'"
+            (click)="playAudio(synthesis, $event)"
+            [title]="currentlyPlayingId === synthesis.id ? 'Stop audio' : 'Play audio'"
+          >
+            {{ currentlyPlayingId === synthesis.id ? '⏹️' : '▶️' }}
+          </button>
+          <button
+            class="btn-control"
+            *ngIf="synthesis.status === 'completed'"
+            (click)="downloadAudio(synthesis, $event)"
+            title="Download audio file"
+          >
+            ⬇️
+          </button>
+          <button
+            class="btn-control btn-control-delete"
+            (click)="deleteSynthesis(synthesis, $event)"
+            title="Delete synthesis"
+          >
+            🗑️
+          </button>
+        </div>
+      </div>
+
+      <!-- Text Preview -->
+      <div class="text-preview-container" (click)="viewSynthesis(synthesis)">
+        <div class="text-label">Text:</div>
+        <div class="text-content" [class.rtl]="isArabic(synthesis.input_text)">
+          {{ truncateText(synthesis.input_text) }}
+        </div>
+      </div>
+
+      <!-- Metadata -->
+      <div class="card-metadata" (click)="viewSynthesis(synthesis)">
+        <span class="meta-item" *ngIf="synthesis.output_duration_seconds">
+          ⏱️ {{ formatDuration(synthesis.output_duration_seconds) }}
         </span>
-        <span class="model-badge">{{ synthesis.model }}</span>
-        <span class="date">{{ formatDate(synthesis.created_at) }}</span>
+        <span class="meta-item" *ngIf="synthesis.processing_time_seconds">
+          ⚡ {{ synthesis.processing_time_seconds | number:'1.2-2' }}s
+        </span>
+        <span class="meta-item" *ngIf="synthesis.language">
+          🌐 {{ synthesis.language | uppercase }}
+        </span>
+        <span class="meta-item">
+          📅 {{ formatDate(synthesis.created_at) }}
+        </span>
       </div>
 
-      <div class="card-body">
-        <p class="text-preview">{{ truncateText(synthesis.input_text) }}</p>
-
-        <div class="card-meta" *ngIf="synthesis.status === 'completed'">
-          <span class="duration" *ngIf="synthesis.output_duration_seconds">
-            Duration: {{ synthesis.output_duration_seconds | number:'1.1-1' }}s
-          </span>
-          <span class="processing-time" *ngIf="synthesis.processing_time_seconds">
-            Processed in {{ synthesis.processing_time_seconds | number:'1.2-2' }}s
-          </span>
-        </div>
-
-        <div class="card-error" *ngIf="synthesis.status === 'failed'">
-          {{ synthesis.error_message }}
-        </div>
+      <!-- Error Display -->
+      <div class="card-error" *ngIf="synthesis.status === 'failed' && synthesis.error_message">
+        {{ synthesis.error_message }}
       </div>
 
-      <div class="card-actions" *ngIf="synthesis.status === 'completed'">
-        <button
-          class="btn-icon"
-          (click)="playAudio(synthesis, $event)"
-          [title]="currentlyPlayingId === synthesis.id ? 'Stop' : 'Play'"
-        >
-          {{ currentlyPlayingId === synthesis.id ? '⏹️' : '▶️' }}
-        </button>
-        <button
-          class="btn-icon"
-          (click)="downloadAudio(synthesis, $event)"
-          title="Download"
-        >
-          ⬇️
-        </button>
-        <button
-          class="btn-icon btn-delete"
-          (click)="deleteSynthesis(synthesis, $event)"
-          title="Delete"
-        >
-          🗑️
-        </button>
-      </div>
-
-      <div class="card-actions" *ngIf="synthesis.status !== 'completed'">
-        <button
-          class="btn-icon btn-delete"
-          (click)="deleteSynthesis(synthesis, $event)"
-          title="Delete"
-        >
-          🗑️
-        </button>
+      <!-- View Link -->
+      <div class="card-footer" (click)="viewSynthesis(synthesis)">
+        <span class="view-link">View Details →</span>
       </div>
     </div>
+  </div>
+
+  <!-- Results Info -->
+  <div class="results-info" *ngIf="syntheses.length > 0">
+    Showing {{ syntheses.length }} synthesis(es)
   </div>
 </div>

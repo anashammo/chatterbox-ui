@@ -11,20 +11,21 @@
 
 .header h1 {
   font-size: 2.5rem;
-  color: #333;
+  color: #f7fafc;
   margin-bottom: 0.5rem;
 }
 
 .subtitle {
-  color: #666;
+  color: #a0aec0;
   font-size: 1.1rem;
 }
 
 .form-card {
-  background: #fff;
+  background: #2d3748;
+  border: 1px solid #4a5568;
   border-radius: 12px;
   padding: 2rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
 .form-group {
@@ -35,11 +36,11 @@
   display: block;
   font-weight: 600;
   margin-bottom: 0.5rem;
-  color: #333;
+  color: #e2e8f0;
 }
 
 .required {
-  color: #e74c3c;
+  color: #fc8181;
 }
 
 .form-group textarea,
@@ -47,10 +48,12 @@
 .form-group input[type="text"] {
   width: 100%;
   padding: 0.75rem;
-  border: 2px solid #e0e0e0;
+  background-color: #1a202c;
+  border: 1px solid #4a5568;
   border-radius: 8px;
   font-size: 1rem;
-  transition: border-color 0.2s;
+  color: #e2e8f0;
+  transition: border-color 0.2s ease;
   box-sizing: border-box;
 }
 
@@ -61,37 +64,47 @@
 }
 
 .form-group textarea:focus,
-.form-group select:focus {
+.form-group select:focus,
+.form-group input[type="text"]:focus {
   outline: none;
-  border-color: #3498db;
+  border-color: #4299e1;
 }
 
 .form-group textarea.invalid {
-  border-color: #e74c3c;
+  border-color: #fc8181;
+}
+
+.form-group select {
+  cursor: pointer;
+}
+
+.form-group select option {
+  background-color: #2d3748;
+  color: #e2e8f0;
 }
 
 .char-counter {
   text-align: right;
   font-size: 0.85rem;
-  color: #666;
+  color: #a0aec0;
   margin-top: 0.25rem;
 }
 
 .char-counter.over {
-  color: #e74c3c;
+  color: #fc8181;
   font-weight: 600;
 }
 
 .help-text {
   font-size: 0.85rem;
-  color: #666;
+  color: #a0aec0;
   margin-top: 0.5rem;
 }
 
 .toggle-advanced {
   background: none;
   border: none;
-  color: #3498db;
+  color: #4299e1;
   cursor: pointer;
   font-size: 0.9rem;
   padding: 0.5rem 0;
@@ -101,6 +114,7 @@
 }
 
 .toggle-advanced:hover {
+  color: #63b3ed;
   text-decoration: underline;
 }
 
@@ -111,7 +125,8 @@
 .advanced-options {
   margin-top: 1rem;
   padding: 1rem;
-  background: #f8f9fa;
+  background: #1a202c;
+  border: 1px solid #4a5568;
   border-radius: 8px;
 }
 
@@ -133,7 +148,7 @@
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -141,27 +156,28 @@
 }
 
 .btn-primary {
-  background: #3498db;
+  background: #4299e1;
   color: white;
   flex: 1;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #2980b9;
+  background: #3182ce;
 }
 
 .btn-primary:disabled {
-  background: #bdc3c7;
+  background: #4a5568;
+  color: #718096;
   cursor: not-allowed;
 }
 
 .btn-secondary {
-  background: #ecf0f1;
-  color: #333;
+  background: #718096;
+  color: white;
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: #dfe6e9;
+  background: #4a5568;
 }
 
 .spinner {
@@ -178,8 +194,9 @@
 }
 
 .error-message {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: #742a2a;
+  border: 1px solid #c53030;
+  color: #feb2b2;
   padding: 1rem;
   border-radius: 8px;
   margin-bottom: 1.5rem;
@@ -193,7 +210,7 @@
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  color: #b91c1c;
+  color: #fc8181;
   line-height: 1;
 }
 
@@ -205,10 +222,12 @@
 }
 
 .nav-links a {
-  color: #3498db;
+  color: #4299e1;
   text-decoration: none;
+  font-weight: 600;
 }
 
 .nav-links a:hover {
+  color: #63b3ed;
   text-decoration: underline;
 }
