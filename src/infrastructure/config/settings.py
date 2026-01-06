@@ -59,7 +59,7 @@ class Settings(BaseSettings):
 
     # Chatterbox TTS Configuration
     tts_default_model: str = Field(
-        default="turbo",
+        default="multilingual",
         description="Default TTS model (turbo, standard, multilingual)"
     )
     tts_device: str = Field(

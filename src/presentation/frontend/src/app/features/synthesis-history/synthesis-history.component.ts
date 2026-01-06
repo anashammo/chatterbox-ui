@@ -18,6 +18,11 @@ export class SynthesisHistoryComponent implements OnInit, OnDestroy {
   isLoading: boolean = false;
   error: string | null = null;
 
+  // Pagination state
+  currentPage: number = 1;
+  pageSize: number = 5;
+  totalItems: number = 0;
+
   // Audio player state
   currentlyPlayingId: string | null = null;
   audioElement: HTMLAudioElement | null = null;
@@ -29,11 +34,15 @@ export class SynthesisHistoryComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.loadSyntheses();
+    this.loadPage(1);
 
     this.synthesisService.syntheses$
       .pipe(takeUntil(this.destroy$))
       .subscribe(syntheses => this.syntheses = syntheses);
+
+    this.synthesisService.totalSyntheses$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(total => this.totalItems = total);
 
     this.synthesisService.loading$
       .pipe(takeUntil(this.destroy$))
@@ -47,12 +56,55 @@ export class SynthesisHistoryComponent implements OnInit, OnDestroy {
   }
 
   loadSyntheses(): void {
-    this.synthesisService.loadSyntheses();
+    const offset = (this.currentPage - 1) * this.pageSize;
+    this.synthesisService.loadSyntheses(this.pageSize, offset);
   }
 
   loadHistory(): void {
     this.error = null;
     this.loadSyntheses();
+  }
+
+  // Pagination methods
+  loadPage(page: number): void {
+    this.currentPage = page;
+    this.loadSyntheses();
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.totalItems / this.pageSize);
+  }
+
+  get canGoPrevious(): boolean {
+    return this.currentPage > 1;
+  }
+
+  get canGoNext(): boolean {
+    return this.currentPage < this.totalPages;
+  }
+
+  previousPage(): void {
+    if (this.canGoPrevious) {
+      this.loadPage(this.currentPage - 1);
+    }
+  }
+
+  nextPage(): void {
+    if (this.canGoNext) {
+      this.loadPage(this.currentPage + 1);
+    }
+  }
+
+  firstPage(): void {
+    if (this.currentPage !== 1) {
+      this.loadPage(1);
+    }
+  }
+
+  lastPage(): void {
+    if (this.currentPage !== this.totalPages) {
+      this.loadPage(this.totalPages);
+    }
   }
 
   formatDuration(seconds: number): string {

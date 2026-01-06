@@ -15,12 +15,12 @@ class SynthesisCreateRequest(BaseModel):
         description="Text to synthesize to speech"
     )
     model: str = Field(
-        default="turbo",
+        default="multilingual",
         description="TTS model to use (turbo, standard, multilingual)"
     )
     language: Optional[str] = Field(
         default=None,
-        description="Language code for multilingual model (e.g., 'en', 'es', 'fr')"
+        description="Language code for multilingual model (e.g., 'en', 'es', 'fr', 'ar')"
     )
     voice_reference_id: Optional[str] = Field(
         default=None,
@@ -42,12 +42,21 @@ class SynthesisCreateRequest(BaseModel):
         json_schema_extra = {
             "example": {
                 "text": "Hello, welcome to Chatterbox TTS!",
-                "model": "turbo",
+                "model": "multilingual",
+                "language": "en",
                 "voice_reference_id": None,
                 "cfg_weight": 0.5,
                 "exaggeration": 0.5
             }
         }
+
+
+class VoiceReferenceInfo(BaseModel):
+    """Embedded voice reference information in synthesis response."""
+
+    id: str
+    name: str
+    language: Optional[str] = None
 
 
 class SynthesisResponse(BaseModel):
@@ -60,6 +69,7 @@ class SynthesisResponse(BaseModel):
     status: str
     language: Optional[str]
     voice_reference_id: Optional[str]
+    voice_reference: Optional[VoiceReferenceInfo] = None  # Embedded voice reference info
     cfg_weight: float
     exaggeration: float
     output_file_path: Optional[str]

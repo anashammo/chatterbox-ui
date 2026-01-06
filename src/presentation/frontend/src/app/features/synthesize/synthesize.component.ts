@@ -17,7 +17,7 @@ export class SynthesizeComponent implements OnInit, OnDestroy {
 
   // Form state
   text: string = '';
-  selectedModel: string = 'turbo';
+  selectedModel: string = 'multilingual';
   selectedVoiceReferenceId: string = '';
   selectedLanguage: string = '';
   cfgWeight: number = 0.5;

@@ -1,4 +1,13 @@
 /**
+ * Embedded voice reference information in synthesis response
+ */
+export interface VoiceReferenceInfo {
+  id: string;
+  name: string;
+  language: string | null;
+}
+
+/**
  * Synthesis model representing a TTS synthesis request
  */
 export interface Synthesis {
@@ -9,6 +18,7 @@ export interface Synthesis {
   status: SynthesisStatus;
   language: string | null;
   voice_reference_id: string | null;
+  voice_reference: VoiceReferenceInfo | null;
   cfg_weight: number;
   exaggeration: number;
   output_file_path: string | null;

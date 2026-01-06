@@ -58,17 +58,20 @@ services:
       # Get your token from: https://huggingface.co/settings/tokens
 
       # TTS model configuration
-      - TTS_DEFAULT_MODEL=${TTS_DEFAULT_MODEL:-turbo}
+      - TTS_DEFAULT_MODEL=${TTS_DEFAULT_MODEL:-multilingual}
       - TTS_DEFAULT_CFG_WEIGHT=${TTS_DEFAULT_CFG_WEIGHT:-0.5}
       - TTS_DEFAULT_EXAGGERATION=${TTS_DEFAULT_EXAGGERATION:-0.5}
 
       # Model pre-download configuration
-      # Set PRELOAD_MODEL_LIST to comma-separated list: turbo,standard,multilingual
+      # Set PRELOAD_MODEL_LIST to comma-separated list: multilingual,turbo,standard
       - PRELOAD_MODELS=${PRELOAD_MODELS:-true}
-      - PRELOAD_MODEL_LIST=${PRELOAD_MODEL_LIST:-turbo,standard,multilingual}
+      - PRELOAD_MODEL_LIST=${PRELOAD_MODEL_LIST:-multilingual,turbo,standard}
 
       # Hot-reload for development (set to false for production)
       - HOT_RELOAD=${HOT_RELOAD:-true}
+
+      # JIT warmup on startup (runs synthesis to prevent first-request delay)
+      - WARMUP_ON_STARTUP=${WARMUP_ON_STARTUP:-true}
 
       # Performance optimization settings
       - ENABLE_TORCH_COMPILE=${ENABLE_TORCH_COMPILE:-true}
@@ -106,7 +109,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 60s
+      start_period: 120s  # Increased for JIT warmup on startup
     restart: unless-stopped
     networks:
       - chatterbox-network

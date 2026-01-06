@@ -74,7 +74,7 @@
       <div class="text-preview-container" (click)="viewSynthesis(synthesis)">
         <div class="text-label">Text:</div>
         <div class="text-content" [class.rtl]="isArabic(synthesis.input_text)">
-          {{ truncateText(synthesis.input_text) }}
+          {{ synthesis.input_text }}
         </div>
       </div>
 
@@ -88,6 +88,10 @@
         </span>
         <span class="meta-item" *ngIf="synthesis.language">
           🌐 {{ synthesis.language | uppercase }}
+        </span>
+        <span class="meta-item" *ngIf="synthesis.voice_reference">
+          🎤 {{ synthesis.voice_reference.name }}
+          <span *ngIf="synthesis.voice_reference.language">({{ synthesis.voice_reference.language }})</span>
         </span>
         <span class="meta-item">
           📅 {{ formatDate(synthesis.created_at) }}
@@ -106,8 +110,43 @@
     </div>
   </div>
 
+  <!-- Pagination -->
+  <div class="pagination" *ngIf="totalPages > 1">
+    <button
+      class="btn btn-secondary"
+      (click)="firstPage()"
+      [disabled]="!canGoPrevious || isLoading"
+    >
+      First
+    </button>
+    <button
+      class="btn btn-secondary"
+      (click)="previousPage()"
+      [disabled]="!canGoPrevious || isLoading"
+    >
+      Previous
+    </button>
+    <span class="page-info">
+      Page {{ currentPage }} of {{ totalPages }}
+    </span>
+    <button
+      class="btn btn-secondary"
+      (click)="nextPage()"
+      [disabled]="!canGoNext || isLoading"
+    >
+      Next
+    </button>
+    <button
+      class="btn btn-secondary"
+      (click)="lastPage()"
+      [disabled]="!canGoNext || isLoading"
+    >
+      Last
+    </button>
+  </div>
+
   <!-- Results Info -->
   <div class="results-info" *ngIf="syntheses.length > 0">
-    Showing {{ syntheses.length }} synthesis(es)
+    Showing {{ syntheses.length }} of {{ totalItems }} synthesis(es)
   </div>
 </div>

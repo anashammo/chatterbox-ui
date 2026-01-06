@@ -38,6 +38,21 @@
   background-color: #3182ce;
 }
 
+.btn-secondary {
+  background-color: #4a5568;
+  color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #718096;
+}
+
+.btn-secondary:disabled {
+  background-color: #2d3748;
+  color: #718096;
+  cursor: not-allowed;
+}
+
 /* Loading State */
 .loading-state {
   text-align: center;
@@ -330,11 +345,27 @@
   font-size: 0.875rem;
 }
 
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding: 1rem;
+}
+
+.page-info {
+  color: #e2e8f0;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
 /* Results Info */
 .results-info {
   text-align: center;
-  margin-top: 2rem;
-  padding: 1rem;
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
   color: #a0aec0;
   font-size: 0.875rem;
 }

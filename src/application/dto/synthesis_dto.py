@@ -1,10 +1,19 @@
 """Data Transfer Object for Synthesis entity."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional
 
 from ...domain.entities.synthesis import Synthesis, SynthesisStatus, TTSModel
+
+
+@dataclass
+class VoiceReferenceInfoDTO:
+    """Embedded voice reference information."""
+
+    id: str
+    name: str
+    language: Optional[str] = None
 
 
 @dataclass
@@ -23,14 +32,15 @@ class SynthesisDTO:
     status: str
     language: Optional[str]
     voice_reference_id: Optional[str]
-    cfg_weight: float
-    exaggeration: float
-    output_file_path: Optional[str]
-    output_duration_seconds: Optional[float]
-    error_message: Optional[str]
-    processing_time_seconds: Optional[float]
-    created_at: datetime
-    completed_at: Optional[datetime]
+    voice_reference: Optional[VoiceReferenceInfoDTO] = None  # Embedded voice ref info
+    cfg_weight: float = 0.5
+    exaggeration: float = 0.5
+    output_file_path: Optional[str] = None
+    output_duration_seconds: Optional[float] = None
+    error_message: Optional[str] = None
+    processing_time_seconds: Optional[float] = None
+    created_at: datetime = None
+    completed_at: Optional[datetime] = None
 
     @classmethod
     def from_entity(cls, entity: Synthesis) -> "SynthesisDTO":
@@ -63,7 +73,7 @@ class SynthesisDTO:
 
     def to_dict(self) -> dict:
         """Convert DTO to dictionary for JSON serialization."""
-        return {
+        result = {
             "id": self.id,
             "input_text": self.input_text,
             "text_length": self.text_length,
@@ -71,6 +81,7 @@ class SynthesisDTO:
             "status": self.status,
             "language": self.language,
             "voice_reference_id": self.voice_reference_id,
+            "voice_reference": None,
             "cfg_weight": self.cfg_weight,
             "exaggeration": self.exaggeration,
             "output_file_path": self.output_file_path,
@@ -80,6 +91,14 @@ class SynthesisDTO:
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "completed_at": self.completed_at.isoformat() if self.completed_at else None,
         }
+        # Add voice reference info if available
+        if self.voice_reference:
+            result["voice_reference"] = {
+                "id": self.voice_reference.id,
+                "name": self.voice_reference.name,
+                "language": self.voice_reference.language,
+            }
+        return result
 
 
 @dataclass
@@ -91,7 +110,7 @@ class SynthesisCreateDTO:
     """
 
     text: str
-    model: str = "turbo"
+    model: str = "multilingual"
     language: Optional[str] = None
     voice_reference_id: Optional[str] = None
     cfg_weight: float = 0.5

@@ -122,7 +122,11 @@ def get_all_syntheses_use_case(
         GetAllSynthesesUseCase instance
     """
     synthesis_repo = SQLiteSynthesisRepository(db)
-    return GetAllSynthesesUseCase(synthesis_repo)
+    voice_ref_repo = SQLiteVoiceReferenceRepository(db)
+    return GetAllSynthesesUseCase(
+        synthesis_repository=synthesis_repo,
+        voice_reference_repository=voice_ref_repo
+    )
 
 
 def get_delete_synthesis_use_case(

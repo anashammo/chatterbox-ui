@@ -21,6 +21,10 @@ export class SynthesisService {
   private synthesesSubject = new BehaviorSubject<Synthesis[]>([]);
   syntheses$ = this.synthesesSubject.asObservable();
 
+  // Total count for pagination
+  private totalSynthesesSubject = new BehaviorSubject<number>(0);
+  totalSyntheses$ = this.totalSynthesesSubject.asObservable();
+
   // Voice references for selection
   private voiceReferencesSubject = new BehaviorSubject<VoiceReference[]>([]);
   voiceReferences$ = this.voiceReferencesSubject.asObservable();
@@ -70,6 +74,7 @@ export class SynthesisService {
     this.apiService.getSyntheses(limit, offset).subscribe({
       next: (response) => {
         this.synthesesSubject.next(response.syntheses);
+        this.totalSynthesesSubject.next(response.total);
         this.loadingSubject.next(false);
       },
       error: (err) => {
