@@ -4,7 +4,7 @@ VoiceReference domain entity for voice cloning reference audio.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import ClassVar, Set
+from typing import ClassVar, Optional, Set
 
 
 @dataclass
@@ -28,6 +28,7 @@ class VoiceReference:
     file_size_bytes: int
     mime_type: str
     duration_seconds: float
+    language: Optional[str] = None
     created_at: datetime = field(default_factory=datetime.utcnow)
 
     # Validation constants

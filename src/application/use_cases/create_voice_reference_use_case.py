@@ -75,6 +75,7 @@ class CreateVoiceReferenceUseCase:
                 file_size_bytes=len(create_dto.file_content),
                 mime_type=create_dto.mime_type,
                 duration_seconds=create_dto.duration_seconds,
+                language=create_dto.language,
             )
 
             # Save to repository

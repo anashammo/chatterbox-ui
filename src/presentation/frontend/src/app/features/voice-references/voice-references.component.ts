@@ -21,9 +21,32 @@ export class VoiceReferencesComponent implements OnInit, OnDestroy {
   // Upload form
   selectedFile: File | null = null;
   voiceName: string = '';
+  selectedLanguage: string = '';
   isUploading: boolean = false;
 
-  // Audio player
+  // Available languages for voice references
+  availableLanguages = [
+    { code: '', name: 'Not specified' },
+    { code: 'en', name: 'English' },
+    { code: 'es', name: 'Spanish' },
+    { code: 'fr', name: 'French' },
+    { code: 'de', name: 'German' },
+    { code: 'it', name: 'Italian' },
+    { code: 'pt', name: 'Portuguese' },
+    { code: 'ar', name: 'Arabic' },
+    { code: 'zh', name: 'Chinese' },
+    { code: 'ja', name: 'Japanese' },
+    { code: 'ko', name: 'Korean' },
+    { code: 'ru', name: 'Russian' },
+    { code: 'hi', name: 'Hindi' },
+  ];
+
+  // Preview audio player
+  isPreviewPlaying: boolean = false;
+  previewAudioElement: HTMLAudioElement | null = null;
+  previewAudioUrl: string | null = null;
+
+  // Audio player for voice references
   currentlyPlayingId: string | null = null;
   audioElement: HTMLAudioElement | null = null;
 
@@ -42,6 +65,7 @@ export class VoiceReferencesComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopAudio();
+    this.cleanupPreviewAudio();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -55,11 +79,69 @@ export class VoiceReferencesComponent implements OnInit, OnDestroy {
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
+      // Stop and clean up previous preview
+      this.cleanupPreviewAudio();
+
       this.selectedFile = input.files[0];
       // Auto-fill name from filename if empty
       if (!this.voiceName) {
         this.voiceName = this.selectedFile.name.replace(/\.[^/.]+$/, '');
       }
+
+      // Create object URL for preview
+      this.previewAudioUrl = URL.createObjectURL(this.selectedFile);
+    }
+  }
+
+  removeSelectedFile(): void {
+    this.cleanupPreviewAudio();
+    this.selectedFile = null;
+    this.selectedLanguage = '';
+    // Clear file input
+    const fileInput = document.getElementById('fileInput') as HTMLInputElement;
+    if (fileInput) fileInput.value = '';
+  }
+
+  togglePreviewAudio(): void {
+    if (this.isPreviewPlaying) {
+      this.stopPreviewAudio();
+    } else {
+      this.playPreviewAudio();
+    }
+  }
+
+  playPreviewAudio(): void {
+    if (!this.previewAudioUrl) return;
+
+    // Stop any playing voice reference audio
+    this.stopAudio();
+
+    this.previewAudioElement = new Audio(this.previewAudioUrl);
+    this.previewAudioElement.onended = () => {
+      this.isPreviewPlaying = false;
+    };
+    this.previewAudioElement.play().then(() => {
+      this.isPreviewPlaying = true;
+    }).catch(err => {
+      console.error('Failed to play preview audio:', err);
+      this.error = 'Failed to play preview audio';
+      this.isPreviewPlaying = false;
+    });
+  }
+
+  stopPreviewAudio(): void {
+    if (this.previewAudioElement) {
+      this.previewAudioElement.pause();
+      this.previewAudioElement = null;
+    }
+    this.isPreviewPlaying = false;
+  }
+
+  cleanupPreviewAudio(): void {
+    this.stopPreviewAudio();
+    if (this.previewAudioUrl) {
+      URL.revokeObjectURL(this.previewAudioUrl);
+      this.previewAudioUrl = null;
     }
   }
 
@@ -69,16 +151,21 @@ export class VoiceReferencesComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Stop and clean up preview audio before upload
+    this.cleanupPreviewAudio();
+
     this.isUploading = true;
     this.error = null;
     this.successMessage = null;
 
-    this.synthesisService.uploadVoiceReference(this.selectedFile, this.voiceName.trim())
+    const language = this.selectedLanguage || undefined;
+    this.synthesisService.uploadVoiceReference(this.selectedFile, this.voiceName.trim(), language)
       .subscribe({
         next: (response) => {
           this.successMessage = `Voice reference "${response.name}" uploaded successfully`;
           this.selectedFile = null;
           this.voiceName = '';
+          this.selectedLanguage = '';
           this.isUploading = false;
           // Clear file input
           const fileInput = document.getElementById('fileInput') as HTMLInputElement;
@@ -110,6 +197,9 @@ export class VoiceReferencesComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Stop preview audio if playing
+    this.stopPreviewAudio();
+
     this.stopAudio();
     this.currentlyPlayingId = ref.id;
 
@@ -133,6 +223,6 @@ export class VoiceReferencesComponent implements OnInit, OnDestroy {
   }
 
   formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString();
+    return new Date(dateString).toLocaleString();
   }
 }

@@ -15,6 +15,7 @@ class VoiceReferenceResponse(BaseModel):
     file_size_mb: float
     mime_type: str
     duration_seconds: float
+    language: Optional[str] = None
     created_at: datetime
 
     class Config:
@@ -49,6 +50,7 @@ class VoiceReferenceUploadResponse(BaseModel):
     original_filename: str
     file_size_mb: float
     duration_seconds: float
+    language: Optional[str] = None
     message: str
 
     class Config:
@@ -59,6 +61,7 @@ class VoiceReferenceUploadResponse(BaseModel):
                 "original_filename": "voice_sample.wav",
                 "file_size_mb": 0.5,
                 "duration_seconds": 10.5,
+                "language": "en",
                 "message": "Voice reference uploaded successfully"
             }
         }

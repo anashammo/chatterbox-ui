@@ -1,17 +1,21 @@
 <div class="voices-container">
+  <!-- Header -->
   <div class="header">
     <h1>Voice References</h1>
-    <a routerLink="/" class="btn btn-secondary">← Back to Synthesize</a>
+    <div class="header-actions">
+      <button class="btn btn-primary" routerLink="/">New Synthesis</button>
+      <button class="btn btn-secondary" routerLink="/history">View History</button>
+    </div>
   </div>
 
   <!-- Messages -->
   <div class="success-message" *ngIf="successMessage">
-    {{ successMessage }}
+    <span>{{ successMessage }}</span>
     <button class="close-btn" (click)="successMessage = null">&times;</button>
   </div>
 
   <div class="error-message" *ngIf="error">
-    {{ error }}
+    <span>{{ error }}</span>
     <button class="close-btn" (click)="error = null">&times;</button>
   </div>
 
@@ -36,6 +40,20 @@
       </div>
 
       <div class="form-group">
+        <label for="voiceLanguage">Language</label>
+        <select
+          id="voiceLanguage"
+          [(ngModel)]="selectedLanguage"
+          [disabled]="isUploading"
+          class="language-select"
+        >
+          <option *ngFor="let lang of availableLanguages" [value]="lang.code">
+            {{ lang.name }}{{ lang.code ? ' (' + lang.code + ')' : '' }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
         <label for="fileInput">Audio File</label>
         <input
           type="file"
@@ -43,18 +61,48 @@
           accept=".wav,.mp3,.flac,.ogg,audio/*"
           (change)="onFileSelected($event)"
           [disabled]="isUploading"
+          [class.hidden]="selectedFile"
         />
-        <p class="file-info" *ngIf="selectedFile">
-          Selected: {{ selectedFile.name }} ({{ (selectedFile.size / 1024 / 1024) | number:'1.2-2' }} MB)
-        </p>
+
+        <!-- File Preview Card (shown when file selected) -->
+        <div class="file-preview-card" *ngIf="selectedFile">
+          <div class="file-icon">🎵</div>
+          <div class="file-details">
+            <div class="file-name">{{ selectedFile.name }}</div>
+            <div class="file-meta">
+              Size: {{ (selectedFile.size / 1024) | number:'1.2-2' }} KB
+            </div>
+            <div class="file-meta">
+              Type: {{ selectedFile.type || 'audio/*' }}
+            </div>
+          </div>
+          <div class="file-actions">
+            <button
+              type="button"
+              class="btn-circle btn-play"
+              (click)="togglePreviewAudio()"
+              [title]="isPreviewPlaying ? 'Stop' : 'Play'"
+            >
+              {{ isPreviewPlaying ? '⏹' : '▶' }}
+            </button>
+            <button
+              type="button"
+              class="btn-circle btn-remove"
+              (click)="removeSelectedFile()"
+              title="Remove file"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
       </div>
 
       <button
-        class="btn btn-primary"
+        class="btn btn-primary btn-upload"
         (click)="uploadVoiceReference()"
         [disabled]="!selectedFile || !voiceName.trim() || isUploading"
       >
-        <span *ngIf="isUploading" class="spinner"></span>
+        <span *ngIf="isUploading" class="spinner-small"></span>
         {{ isUploading ? 'Uploading...' : 'Upload Voice Reference' }}
       </button>
     </div>
@@ -64,43 +112,73 @@
   <div class="voices-section">
     <h2>Your Voice References</h2>
 
-    <div class="loading" *ngIf="isLoading">
-      <div class="spinner-large"></div>
+    <!-- Loading State -->
+    <div class="loading-state" *ngIf="isLoading">
+      <div class="spinner"></div>
+      <h3>Loading voice references...</h3>
     </div>
 
+    <!-- Empty State -->
     <div class="empty-state" *ngIf="!isLoading && voiceReferences.length === 0">
-      <p>No voice references yet. Upload one to get started with voice cloning.</p>
+      <div class="empty-icon">🎤</div>
+      <h3>No voice references yet</h3>
+      <p>Upload a voice reference above to get started with voice cloning.</p>
     </div>
 
+    <!-- Voices List -->
     <div class="voices-list" *ngIf="!isLoading && voiceReferences.length > 0">
       <div class="voice-card" *ngFor="let ref of voiceReferences">
-        <div class="voice-info">
-          <h3>{{ ref.name }}</h3>
-          <div class="voice-meta">
-            <span>{{ ref.duration_seconds | number:'1.1-1' }}s</span>
-            <span>{{ ref.file_size_mb | number:'1.2-2' }} MB</span>
-            <span>{{ formatDate(ref.created_at) }}</span>
+        <!-- Card Header -->
+        <div class="card-header-row">
+          <div class="card-info">
+            <div class="voice-id">ID: {{ ref.id }}</div>
+            <div class="card-badges">
+              <span class="voice-name-badge">🎤 {{ ref.name }}</span>
+              <span class="language-badge" *ngIf="ref.language">🌐 {{ ref.language }}</span>
+            </div>
           </div>
-          <p class="filename">{{ ref.original_filename }}</p>
+          <div class="header-actions">
+            <button
+              class="btn-control"
+              (click)="playAudio(ref)"
+              [title]="currentlyPlayingId === ref.id ? 'Stop audio' : 'Play audio'"
+            >
+              {{ currentlyPlayingId === ref.id ? '⏹️' : '▶️' }}
+            </button>
+            <button
+              class="btn-control btn-control-delete"
+              (click)="deleteVoiceReference(ref)"
+              title="Delete voice reference"
+            >
+              🗑️
+            </button>
+          </div>
         </div>
 
-        <div class="voice-actions">
-          <button
-            class="btn-icon"
-            (click)="playAudio(ref)"
-            [title]="currentlyPlayingId === ref.id ? 'Stop' : 'Play'"
-          >
-            {{ currentlyPlayingId === ref.id ? '⏹️' : '▶️' }}
-          </button>
-          <button
-            class="btn-icon btn-delete"
-            (click)="deleteVoiceReference(ref)"
-            title="Delete"
-          >
-            🗑️
-          </button>
+        <!-- File Info Preview -->
+        <div class="file-preview-container">
+          <div class="text-label">File:</div>
+          <div class="text-content">{{ ref.original_filename }}</div>
+        </div>
+
+        <!-- Metadata -->
+        <div class="card-metadata">
+          <span class="meta-item">
+            ⏱️ {{ ref.duration_seconds | number:'1.1-1' }}s
+          </span>
+          <span class="meta-item">
+            📁 {{ ref.file_size_mb | number:'1.2-2' }} MB
+          </span>
+          <span class="meta-item">
+            📅 {{ formatDate(ref.created_at) }}
+          </span>
         </div>
       </div>
+    </div>
+
+    <!-- Results Info -->
+    <div class="results-info" *ngIf="voiceReferences.length > 0">
+      Showing {{ voiceReferences.length }} voice reference(s)
     </div>
   </div>
 </div>

@@ -20,6 +20,7 @@ try:
         for vr in voice_refs:
             print(f'  - ID: {vr.id[:16]}...')
             print(f'    Name: {vr.name}')
+            print(f'    Language: {vr.language or "Not specified"}')
             print(f'    Duration: {vr.duration_seconds}s')
             print(f'    Created: {vr.created_at}')
             print()

@@ -79,10 +79,13 @@ export class ApiService {
   /**
    * Upload a voice reference for voice cloning
    */
-  uploadVoiceReference(file: File, name: string): Observable<VoiceReferenceUploadResponse> {
+  uploadVoiceReference(file: File, name: string, language?: string): Observable<VoiceReferenceUploadResponse> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('name', name);
+    if (language) {
+      formData.append('language', language);
+    }
 
     return this.http.post<VoiceReferenceUploadResponse>(
       `${this.apiUrl}/voice-references`,

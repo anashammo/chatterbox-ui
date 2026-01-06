@@ -45,6 +45,7 @@ class SQLiteVoiceReferenceRepository(VoiceReferenceRepository):
         voice_ref.file_size_bytes = model.file_size_bytes
         voice_ref.mime_type = model.mime_type
         voice_ref.duration_seconds = model.duration_seconds
+        voice_ref.language = model.language
         voice_ref.created_at = model.created_at
         return voice_ref
 
@@ -66,6 +67,7 @@ class SQLiteVoiceReferenceRepository(VoiceReferenceRepository):
             file_size_bytes=entity.file_size_bytes,
             mime_type=entity.mime_type,
             duration_seconds=entity.duration_seconds,
+            language=entity.language,
             created_at=entity.created_at,
         )
 

@@ -9,6 +9,7 @@ export interface VoiceReference {
   file_size_mb: number;
   mime_type: string;
   duration_seconds: number;
+  language?: string;
   created_at: string;
 }
 
@@ -25,5 +26,6 @@ export interface VoiceReferenceUploadResponse {
   original_filename: string;
   file_size_mb: number;
   duration_seconds: number;
+  language?: string;
   message: string;
 }

@@ -149,8 +149,8 @@ export class SynthesisService {
    * Upload a voice reference
    * Uses tap() instead of subscribe() to avoid duplicate HTTP requests
    */
-  uploadVoiceReference(file: File, name: string): Observable<any> {
-    return this.apiService.uploadVoiceReference(file, name).pipe(
+  uploadVoiceReference(file: File, name: string, language?: string): Observable<any> {
+    return this.apiService.uploadVoiceReference(file, name, language).pipe(
       tap((response) => {
         // Add the new voice reference to the list immediately
         const current = this.voiceReferencesSubject.getValue();
@@ -162,6 +162,7 @@ export class SynthesisService {
           file_size_mb: response.file_size_mb,
           mime_type: 'audio/wav',
           duration_seconds: response.duration_seconds,
+          language: response.language,
           created_at: new Date().toISOString()
         };
         this.voiceReferencesSubject.next([newRef, ...current]);

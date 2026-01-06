@@ -24,6 +24,7 @@ class VoiceReferenceModel(Base):
     file_size_bytes = Column(Integer, nullable=False)
     mime_type = Column(String(100), nullable=False)
     duration_seconds = Column(Float, nullable=False)
+    language = Column(String(10), nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     # Relationships - syntheses that use this voice reference

@@ -73,6 +73,7 @@ async def get_audio_duration(file_content: bytes, mime_type: str) -> float:
 async def upload_voice_reference(
     file: UploadFile = File(..., description="Voice reference audio file (5-30 seconds)"),
     name: str = Form(..., min_length=1, max_length=255, description="Name for this voice"),
+    language: str = Form(default=None, max_length=10, description="Language code (e.g., en, es, ar)"),
     use_case: CreateVoiceReferenceUseCase = Depends(get_create_voice_reference_use_case),
 ) -> VoiceReferenceUploadResponse:
     """
@@ -124,6 +125,7 @@ async def upload_voice_reference(
             file_content=file_content,
             mime_type=mime_type,
             duration_seconds=duration_seconds,
+            language=language if language else None,
         )
 
         # Validate and create
@@ -136,6 +138,7 @@ async def upload_voice_reference(
             original_filename=result.original_filename,
             file_size_mb=round(result.file_size_bytes / (1024 * 1024), 2),
             duration_seconds=result.duration_seconds,
+            language=result.language,
             message="Voice reference uploaded successfully",
         )
 
@@ -174,6 +177,7 @@ async def list_voice_references(
                     file_size_mb=round(vr.file_size_bytes / (1024 * 1024), 2),
                     mime_type=vr.mime_type,
                     duration_seconds=vr.duration_seconds,
+                    language=vr.language,
                     created_at=vr.created_at,
                 )
                 for vr in voice_refs
@@ -209,6 +213,7 @@ async def get_voice_reference(
         file_size_mb=round(result.file_size_bytes / (1024 * 1024), 2),
         mime_type=result.mime_type,
         duration_seconds=result.duration_seconds,
+        language=result.language,
         created_at=result.created_at,
     )
 

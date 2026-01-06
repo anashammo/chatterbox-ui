@@ -57,7 +57,7 @@
       <select id="voiceRef" [(ngModel)]="selectedVoiceReferenceId" [disabled]="isLoading">
         <option value="">Default voice</option>
         <option *ngFor="let ref of voiceReferences" [value]="ref.id">
-          {{ ref.name }} ({{ ref.duration_seconds | number:'1.1-1' }}s)
+          {{ ref.name }}{{ ref.language ? ' [' + ref.language + ']' : '' }} ({{ ref.duration_seconds | number:'1.1-1' }}s)
         </option>
       </select>
       <p class="help-text">Select a voice reference for voice cloning</p>

@@ -23,6 +23,7 @@ class VoiceReferenceDTO:
     file_size_bytes: int
     mime_type: str
     duration_seconds: float
+    language: Optional[str]
     created_at: datetime
 
     @classmethod
@@ -44,6 +45,7 @@ class VoiceReferenceDTO:
             file_size_bytes=entity.file_size_bytes,
             mime_type=entity.mime_type,
             duration_seconds=entity.duration_seconds,
+            language=entity.language,
             created_at=entity.created_at,
         )
 
@@ -58,6 +60,7 @@ class VoiceReferenceDTO:
             "file_size_mb": round(self.file_size_bytes / (1024 * 1024), 2),
             "mime_type": self.mime_type,
             "duration_seconds": self.duration_seconds,
+            "language": self.language,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
@@ -75,6 +78,7 @@ class VoiceReferenceCreateDTO:
     file_content: bytes
     mime_type: str
     duration_seconds: float
+    language: Optional[str] = None
 
     def validate(self) -> None:
         """
