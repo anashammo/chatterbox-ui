@@ -1,7 +1,7 @@
 """SQLAlchemy ORM model for VoiceReference entity."""
 
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Float, DateTime
+from sqlalchemy import Column, String, Integer, Float, DateTime, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from ..database import Base
@@ -17,8 +17,13 @@ class VoiceReferenceModel(Base):
 
     __tablename__ = "voice_references"
 
+    # Composite unique constraint: name + language combination must be unique
+    __table_args__ = (
+        UniqueConstraint('name', 'language', name='uq_voice_reference_name_language'),
+    )
+
     id = Column(String(36), primary_key=True)
-    name = Column(String(255), nullable=False, unique=True)
+    name = Column(String(255), nullable=False)  # No longer unique alone
     original_filename = Column(String(255), nullable=False)
     file_path = Column(String(500), nullable=False)
     file_size_bytes = Column(Integer, nullable=False)

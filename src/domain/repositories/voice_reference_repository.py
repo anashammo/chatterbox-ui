@@ -94,11 +94,43 @@ class VoiceReferenceRepository(ABC):
         pass
 
     @abstractmethod
+    async def get_by_name_and_language(
+        self,
+        name: str,
+        language: Optional[str]
+    ) -> Optional[VoiceReference]:
+        """
+        Retrieve a voice reference by name and language combination.
+
+        Args:
+            name: The name of the voice reference.
+            language: The language code (can be None).
+
+        Returns:
+            The voice reference entity if found, None otherwise.
+        """
+        pass
+
+    @abstractmethod
     async def count(self) -> int:
         """
         Get total count of voice references.
 
         Returns:
             Total number of voice reference records.
+        """
+        pass
+
+    @abstractmethod
+    async def get_by_ids(self, voice_reference_ids: List[str]) -> List[VoiceReference]:
+        """
+        Retrieve multiple voice references by their IDs.
+
+        Args:
+            voice_reference_ids: List of voice reference IDs to fetch.
+
+        Returns:
+            List of voice reference entities found (may be fewer than requested
+            if some IDs don't exist).
         """
         pass

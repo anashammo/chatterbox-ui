@@ -51,10 +51,15 @@ class CreateVoiceReferenceUseCase:
         # Validate input
         create_dto.validate()
 
-        # Check if name already exists
-        existing = await self.voice_ref_repo.get_by_name(create_dto.name)
+        # Check if name + language combination already exists
+        existing = await self.voice_ref_repo.get_by_name_and_language(
+            create_dto.name, create_dto.language
+        )
         if existing:
-            raise ValueError(f"Voice reference with name '{create_dto.name}' already exists")
+            lang_info = f" ({create_dto.language})" if create_dto.language else ""
+            raise ValueError(
+                f"Voice reference with name '{create_dto.name}'{lang_info} already exists"
+            )
 
         # Generate ID and save file
         voice_ref_id = str(uuid.uuid4())

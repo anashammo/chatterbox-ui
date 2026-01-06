@@ -154,9 +154,45 @@ class SQLiteVoiceReferenceRepository(VoiceReferenceRepository):
         except Exception as e:
             raise RepositoryException(f"Failed to get voice reference by name: {str(e)}")
 
+    async def get_by_name_and_language(
+        self,
+        name: str,
+        language: Optional[str]
+    ) -> Optional[VoiceReference]:
+        """Retrieve a voice reference by name and language combination."""
+        try:
+            model = self.db.query(VoiceReferenceModel).filter(
+                VoiceReferenceModel.name == name,
+                VoiceReferenceModel.language == language
+            ).first()
+
+            if model is None:
+                return None
+
+            return self._to_entity(model)
+        except Exception as e:
+            raise RepositoryException(
+                f"Failed to get voice reference by name and language: {str(e)}"
+            )
+
     async def count(self) -> int:
         """Get total count of voice references."""
         try:
             return self.db.query(VoiceReferenceModel).count()
         except Exception as e:
             raise RepositoryException(f"Failed to count voice references: {str(e)}")
+
+    async def get_by_ids(self, voice_reference_ids: List[str]) -> List[VoiceReference]:
+        """Retrieve multiple voice references by their IDs."""
+        if not voice_reference_ids:
+            return []
+
+        try:
+            models = (
+                self.db.query(VoiceReferenceModel)
+                .filter(VoiceReferenceModel.id.in_(voice_reference_ids))
+                .all()
+            )
+            return [self._to_entity(m) for m in models]
+        except Exception as e:
+            raise RepositoryException(f"Failed to get voice references by ids: {str(e)}")
